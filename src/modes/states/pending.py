@@ -1,8 +1,9 @@
 #!/user/bin/env python
 
-from agrodrone.lib import State
+from src.lib.state import FlightState
 
-class Pending(State):
+
+class Pending(FlightState):
     """
     This state is doing nothing
     """

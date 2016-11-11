@@ -7,7 +7,8 @@ import geometry_msgs.msg
 from mavros.srv import CommandBool, SetMode
 from mavros.msg import State
 
-class Vehicle(self):
+
+class Vehicle(object):
     """
     Class that stores all vehicle information and handles the control
     """

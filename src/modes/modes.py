@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from transitions import Machine
-import Pending#, RTD, autospray
+from src.modes import Inactive, RTD#, autospray
 
 
 class Modes(Machine):
@@ -9,15 +9,18 @@ class Modes(Machine):
     Transitions to a new mode are triggered by self.to_'mode name'()
     """
 
-    def set_cur_mode(self): 
-        self.current_mode = self.get_state()
+    def set_new_mode(self):
+        self.current_mode = self.states[self.state]
 
     def __init__(self, vehicle):
+        self.current_mode = None
         self.vehicle = vehicle
         modes = [
-                Pending(self.vehicle)
-                # RTD(self.vehicle),
+                Inactive(self.vehicle),
+                RTD(self.vehicle),
                 # autospray(self.vehicle)
                 ]
-        Machine.__init__(self, states=modes, initial='Pending', after_state_change='set_cur_mode')
-        set_cur_mode() 
+        self.initialState = modes[0].name
+        Machine.__init__(self, states=modes, initial=self.initialState, after_state_change='set_new_mode')
+        self.set_new_mode()
+

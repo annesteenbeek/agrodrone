@@ -5,8 +5,8 @@ import rospy
 
 import mavros.msg
 
-from agrodrone.modes import Modes
-from agrodrone.lib.vehicle import Vehicle
+from src.modes.modes import Modes
+from src.lib.vehicle import Vehicle
 
 DEFAULT_CONTROL_LOOP_RATE = 100
 
