@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-
+PKG = 'test_agrodrone'
 import unittest
 from src.modes.modes import Modes
 
 
-class testModes(unittest.TestCase):
+class TestModes(unittest.TestCase):
 
     def setUp(self):
         self.modes = Modes('vehicle')
@@ -62,4 +62,6 @@ class testModes(unittest.TestCase):
 
 
 if __name__=="__main__":
-    unittest.main()
+    import rosunit
+    # unittest.main()
+    rosunit.unitrun(PKG, 'Test the modes', TestModes)

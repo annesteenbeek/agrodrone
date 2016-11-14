@@ -64,7 +64,7 @@ class Vehicle(object):
         Publish a SET_POSITION_TARGET_LOCAL_NED message with linear
         velocities vx, vy, vz and angular velocity yaw_rate.
         """
-        vx, vy, vz, yaw_rate = setpoint
+        vx, vy, vz, yaw_rate = velocity
 
         msg = geometry_msgs.msg.TwistStamped()
         msg.twist.linear.x = vx
@@ -78,7 +78,7 @@ class Vehicle(object):
         """
         Handle mavros/local_position/local messages.
         """
-        pose = msg.pose
+        pose = data.pose
         self.position = pose.position
         self.orientation = pose.orientation
 

@@ -10,10 +10,10 @@ class Modes(Machine):
     """
 
     def set_new_mode(self):
-        self.current_mode = self.states[self.state]
+        self.cur_mode = self.states[self.state]
 
     def __init__(self, vehicle):
-        self.current_mode = None
+        self.cur_mode = None
         self.vehicle = vehicle
         modes = [
                 Inactive(self.vehicle),

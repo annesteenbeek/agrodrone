@@ -29,10 +29,10 @@ class CommanderNode(object):
         Spin the loop
         """
         while not rospy.is_shutdown():
-            self.modes.current_mode.run()
+            self.modes.cur_mode.run()
             self.control_loop_rate.sleep()
 
 if __name__ == "__main__":
     vehicle = Vehicle()
-    node = CommanderNode(vehicle)
-    node.run()
+    commander = CommanderNode(vehicle)
+    commander.run()

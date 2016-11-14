@@ -12,7 +12,6 @@ class RTD(Mode):
     This is the Return To Dock mode, where the vehicle rerturns to the docking station
     """
 
-
     def __init__(self, vehicle):
         self.vehicle = vehicle
 

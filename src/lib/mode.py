@@ -11,31 +11,31 @@ class Mode(State, Machine):
     """
 
     def set_current_state(self):
-        self.current_state = self.states[self.state]
+        self.cur_state = self.states[self.state]
 
     def check_transition(self):
         """
-        Handlte an attempted state transition
+        Handle an attempted state transition
         """
         result = hasattr(self, 'attempt_transition')
         if result:
             self.attempt_transition()
         else:
-            print("attempt_transition does not exist")
+            pass
 
     def __init__(self, vehicle,
             states,
             transitions
             ):
         """
-
+        This class is used to create a state machine for modes
         :param vehicle: The vehicle object
         :param states: an array of State classes
         :param transitions: a double list of state transitions, [[source, dest, conditions, unless],..]
         """
         self.name = self.__class__.__name__
-        self.current_state = None
-
+        self.cur_state = None
+        self.transitions = transitions
         self.vehicle = vehicle
 
         # initialize the states
@@ -47,14 +47,12 @@ class Mode(State, Machine):
 
         # set a default trigger name for each transition
         if transitions is not None:
-            modified_transitions = []
             for transition in transitions:
                 transition.insert(0, 'attempt_transition')
-                modified_transitions.append(transition)
 
         Machine.__init__(self,
                          states=activeStates,
-                         transitions=modified_transitions,
+                         transitions=self.transitions,
                          initial=self.initialState,
                          after_state_change='set_current_state')
         self.set_current_state()
@@ -62,5 +60,5 @@ class Mode(State, Machine):
 
     def run(self):
         self.check_transition()
-        self.current_state.run()
+        self.cur_state.run()
 
