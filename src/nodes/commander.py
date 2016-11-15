@@ -10,6 +10,7 @@ from src.lib.vehicle import Vehicle
 
 DEFAULT_CONTROL_LOOP_RATE = 100
 
+
 class CommanderNode(object):
     """
     This node controls states and monitors the copter
@@ -29,7 +30,7 @@ class CommanderNode(object):
         Spin the loop
         """
         while not rospy.is_shutdown():
-            self.modes.cur_mode.run()
+            self.modes.run()
             self.control_loop_rate.sleep()
 
 if __name__ == "__main__":

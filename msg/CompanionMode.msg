@@ -1,0 +1,2 @@
+string mode
+string state

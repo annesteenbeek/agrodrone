@@ -12,6 +12,7 @@ class Vehicle(object):
     """
     Class that stores all vehicle information and handles the control
     """
+    # TODO create helper class to setup subscribers, publishers etc...
     def __init__(self):
         self.position = None
         self.orientation = None
@@ -84,6 +85,24 @@ class Vehicle(object):
 
     def state_callback(self, data):
         self.fcu_mode = data.mode
+        if self.is_armed is not data.armed:
+            if data.armed:
+                self.run_on_armed()
+            elif not data.armed:
+                self.run_on_disarm()
+        self.is_armed = data.armed
+
+    def run_on_armed(self):
+        """
+        Function that runs when the vehicle arms
+        """
+        pass
+
+    def run_on_disarm(self):
+        """
+        Function that runs when the vehicle disarms
+        """
+        pass
 
     def set_mode(self, mode):
         """

@@ -6,7 +6,7 @@
 
     <node name="commander" pkg="agrodrone" type="commander.py" output="screen"/>
 
-    <test test-name="test_commander" pkg="agrodrone" type="commanderTest.py" time-limit="20.0">
+    <test test-name="test_commander" pkg="agrodrone" type="commanderTest.py" time-limit="3.0">
     </test>>
     <test test-name="mode_switches" pkg="agrodrone" type="modeTests.py">
     </test>
