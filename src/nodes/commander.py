@@ -3,8 +3,6 @@
 
 import rospy
 
-import mavros.msg
-
 from src.modes.modes import Modes
 from src.lib.vehicle import Vehicle
 

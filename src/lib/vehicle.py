@@ -1,11 +1,18 @@
 #!/usr/bin/env python
 
 import rospy
+import time
 
-import geometry_msgs.msg
+from geometry_msgs.msg import Quaternion, PoseStamped, TwistStamped
+from tf.transformations import quaternion_from_euler
+import math
+from std_msgs.msg import Header
 
 from mavros.srv import CommandBool, SetMode
 from mavros.msg import State
+
+DEFAULT_FCU_TYPE = "PX4"
+DEFAULT_CONTROL_LOOP_RATE = 100
 
 
 class Vehicle(object):
@@ -20,29 +27,32 @@ class Vehicle(object):
         self.is_offboard = None
         self.firmware = None
         self.fcu_mode = None    # mode the FCU is currently in
+        self.offb_modes = ['OFFBOARD', 'GUIDED']
+        # TODO find better method to detect fcu type
+        self.fcu_type = rospy.get_param("~fcu_type", DEFAULT_FCU_TYPE)
 
         # TODO set stream rate
         self.setup_subscribers()
         self.setup_publishers()
 
     def setup_subscribers(self):
-        rospy.Subscriber("/mavros/local_position/local",
-                geometry_msgs.msg.PoseStamped,
+        rospy.Subscriber("mavros/local_position/pose",
+                PoseStamped,
                 self.position_callback)
 
-        rospy.Subscriber("/mavros/state",
+        rospy.Subscriber("mavros/state",
                 State,
                 self.state_callback)
 
     def setup_publishers(self):
         self.location_setpoint_publisher = \
-                rospy.Publisher("/mavros/setpoint_position/local_position",
-                        geometry_msgs.msg.PoseStamped,
+                rospy.Publisher("mavros/setpoint_position/local",
+                        PoseStamped,
                         queue_size=10)
 
         self.velocity_setpoint_publisher = \
-                rospy.Publisher("/mavros/setpoint_velocity/cmd_vel",
-                        geometry_msgs.msg.TwistStamped,
+                rospy.Publisher("mavros/setpoint_velocity/cmd_vel",
+                        TwistStamped,
                         queue_size=10)
 
     def set_local_setpoint(self, setpoint):
@@ -50,13 +60,20 @@ class Vehicle(object):
         Publish a SET_POSITION_TARGET_LOCAL_NED message with
         position x, y, z and yaw.
         """
-        x, y, z, yaw = setpoint
+        x, y, z, yaw_degrees = setpoint
 
-        msg = geometry_msgs.msg.PoseStamped()
+        msg = PoseStamped()
+        msg.header = Header()
+        msg.header.frame_id = "setpoint_frame"
+        msg.header.stamp = rospy.get_rostime()
+
         msg.pose.position.x = x
         msg.pose.position.y = y
         msg.pose.position.z = z
-        msg.pose.orientation.z = yaw
+
+        yaw = math.radians(yaw_degrees)
+        quaternion = quaternion_from_euler(0, 0, yaw)
+        msg.pose.orientation = Quaternion(*quaternion)
 
         self.location_setpoint_publisher.publish(msg)
 
@@ -67,7 +84,7 @@ class Vehicle(object):
         """
         vx, vy, vz, yaw_rate = velocity
 
-        msg = geometry_msgs.msg.TwistStamped()
+        msg = TwistStamped()
         msg.twist.linear.x = vx
         msg.twist.linear.y = vy
         msg.twist.linear.z = vz
@@ -85,6 +102,11 @@ class Vehicle(object):
 
     def state_callback(self, data):
         self.fcu_mode = data.mode
+        if self.fcu_mode in self.offb_modes:
+            self.is_offboard = True
+        else:
+            self.is_offboard = False
+
         if self.is_armed is not data.armed:
             if data.armed:
                 self.run_on_armed()
@@ -112,7 +134,7 @@ class Vehicle(object):
         set_mode(custom_mode=mode)
 
     def set_armed_state(self, state):
-        set_armed_state = rospy.ServiceProxy("/mavros/cmd/arming", CommandBool)
+        set_armed_state = rospy.ServiceProxy("mavros/cmd/arming", CommandBool)
         set_armed_state(value=state)
 
     def set_arm(self):
@@ -120,4 +142,20 @@ class Vehicle(object):
 
     def set_disarm(self):
         self.set_armed_state(False)
+
+    def set_offboard(self):
+        """
+        Attempt to transition into offboard mode
+        """
+        control_loop_rate = rospy.get_param("~control_loop_rate", DEFAULT_CONTROL_LOOP_RATE)
+        rate = rospy.Rate(control_loop_rate)
+        offb_mode = self.offb_modes[0] if self.fcu_type is "PX4" else self.offb_modes[1]
+        # first send setpoints, else offb mode will be rejected
+        for i in range(100):
+            if self.is_offboard:
+                break
+            setpoint = [self.position.x, self.position.y, self.position.z, 0]
+            self.set_local_setpoint(setpoint)
+            rate.sleep()
+        self.set_mode(offb_mode)
 

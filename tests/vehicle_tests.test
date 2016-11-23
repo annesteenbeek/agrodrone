@@ -1,13 +1,4 @@
 <launch>
-    <include file="$(find px4)/launch/mavros_posix_sitl.launch">
-        <arg name="fcu_url" value="udp://:14540@localhost:14557"/>
-        <arg name="gui" value="false"/>
-    </include>
-
-    <node name="commander" pkg="agrodrone" type="commander.py" output="screen"/>
-
-    <test test-name="test_commander" pkg="agrodrone" type="commanderTest.py" time-limit="3.0">
-    </test>>
     <test test-name="mode_switches" pkg="agrodrone" type="modeTests.py">
     </test>
 
