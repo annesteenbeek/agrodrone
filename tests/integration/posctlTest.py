@@ -59,7 +59,7 @@ class MavrosOffboardPosctlTest(unittest.TestCase):
 
     def reach_position(self, x, y, z, timeout):
         # does it reach the position in X seconds?
-        count = 0
+        count = 1
         while count < timeout:
             # update timestamp for each published SP
             self.vehicle.set_local_setpoint([x, y, z, 0])

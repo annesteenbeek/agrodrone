@@ -14,10 +14,10 @@ class Autospray(Mode):
     def __init__(self, vehicle):
         self.vehicle = vehicle
 
-        states = [TrackSpray(self.vehicle),
-                  InterruptSpray(self.vehicle),
-                  ResumeSpray(self.vehicle),
-                  EndSpray(self.vehicle)
+        states = [TrackSpray,
+                  InterruptSpray,
+                  ResumeSpray,
+                  EndSpray
                   ]  # first state is automatically the initial state
 
         transitions = [['TrackSpray', 'InterruptSpray', 'track_to_interrupt'],
@@ -26,6 +26,7 @@ class Autospray(Mode):
                        ['TrackSpray', 'EndSpray', 'track_to_end']]
 
         Mode.__init__(self, self.vehicle, states, transitions)
+
 
     def track_to_interrupt(self):
         """

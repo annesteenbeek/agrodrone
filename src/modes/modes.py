@@ -32,6 +32,7 @@ class Modes(Machine):
                 RTD(self.vehicle),
                 Autospray(self.vehicle)
                 ]
+
         self.initialState = modes[0].name
         Machine.__init__(self, states=modes, initial=self.initialState, after_state_change='set_new_mode')
         self.set_new_mode()
@@ -50,25 +51,28 @@ class Modes(Machine):
     def publish_mode(self):
         now = rospy.get_rostime()
         if now - self.prev_publish_time > self.mode_pub_rate:
-            info = CompanionMode
+            info = CompanionMode()
             info.mode = self.cur_mode.name
             info.state = self.cur_mode.cur_state.name
             self.mode_pub.publish(info)
             self.prev_publish_time = now
 
-    def set_companion_mode(self, mode_name):
+    def set_companion_mode(self, data):
         """
         Service callback to set companion computer modes
         :param input: String that represents a mode
         :return: True/False when mode switch has taken place
         """
+        mode_name = data.mode_to_set
         if self.cur_mode.name is not mode_name:
-            function_name = "to_" + mode_name
-            has_function = hasattr(self, function_name)
-            if has_function:
-                result = eval(self, mode_name)
+            if mode_name == "Inactive":
+               result = self.to_Inactive()
+            elif mode_name == "RTD":
+                result = self.to_RTD()
+            elif mode_name == "Autospray":
+                result = self.to_Autospray()
             else:
-                rospy.logerr("Service mode transition: Mode not found.")
+                rospy.logerr("Service mode transition: Mode (%s) not found." % mode_name)
                 result = False
         else:
             rospy.logerr("Service mode transition: Already in this mode, not transitioning.")

@@ -44,4 +44,5 @@ class RTD(Mode):
         return True
 
     def land_to_pending(self):
-        return True
+        # TODO fix being in final state
+        return False

@@ -10,12 +10,9 @@
         <arg name="ns" value="$(arg ns)"/>
     </include>
 
-    <!--<node name="commander" pkg="agrodrone" type="commander.py" output="screen"/>-->
+    <node name="commander" pkg="agrodrone" type="commander.py" output="screen"/>
     <group ns="$(arg ns)">
-        <test test-name="test_commander" pkg="agrodrone" type="posctlTest.py" time-limit="
-        100.0">
-        </test>
+        <!--<test test-name="position_control_test" pkg="agrodrone" type="posctlTest.py" time-limit="100.0"/>-->
+        <test test-name="spray_mission_test" pkg="agrodrone" type="sprayMissionTest.py" time-limit="100.0"/>
     </group>
-
-
 </launch>

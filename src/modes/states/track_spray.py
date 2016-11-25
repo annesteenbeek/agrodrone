@@ -2,6 +2,7 @@
 
 from src.lib.state import FlightState
 from mavros_msgs.msg import CommandCode
+import rospy
 
 
 class TrackSpray(FlightState):
@@ -13,10 +14,10 @@ class TrackSpray(FlightState):
         """
         This function is called when the mode enters this state
         """
-        super(FlightState, self).enter(event_data)
         # TODO check if tank is connected and do pre spray checks...
         self.vehicle.set_mode("AUTO.MISSION")
         self.final_waypoint_flag = False
+        super(TrackSpray, self).enter(event_data)
 
 
     def is_state_complete(self):

@@ -23,6 +23,12 @@ class Mode(State, Machine):
         else:
             pass
 
+    def enter(self, event_data):
+        print("Entered mode: " + self.name)
+        super(Mode, self).enter(event_data)
+        self.cur_state.enter(event_data)
+
+
     def __init__(self, vehicle,
             states,
             transitions

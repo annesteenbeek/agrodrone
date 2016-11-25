@@ -8,4 +8,4 @@ d = generate_distutils_setup(
     packages=["src"]
 )
 
-setup(**d)
+setup(**d, requires=['six', 'transitions'])

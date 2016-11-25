@@ -48,7 +48,7 @@ class Vehicle(object):
                 State,
                 self.state_callback)
 
-        rospy.Subscriber("mavros/missions/waypoints",
+        rospy.Subscriber("mavros/mission/waypoints",
                         WaypointList,
                          self.mission_callback)
 

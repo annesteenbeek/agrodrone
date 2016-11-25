@@ -2,7 +2,6 @@
 
 from transitions import State
 
-
 class FlightState(State):
     """
     This is the helper class for the states.
@@ -10,22 +9,14 @@ class FlightState(State):
     States are controlled by the state machine in a mode
     """
 
+    def enter(self, event_data):
+        print("Entered state: " + self.name)
+        super(FlightState, self).enter(event_data)
+
     def __init__(self, vehicle):
         self.vehicle = vehicle
         self.name = self.__class__.__name__     # inherit the class name as state name
         super(FlightState, self).__init__(self.name)
-
-    def enter(self, event_data):
-        """
-        This function is called when the mode enters this state
-        """
-        super(FlightState, self).enter(event_data)
-
-    def exit(self, event_data):
-        """
-        This function is called when the mode exits this state
-        """
-        super(FlightState, self).exit(event_data)
 
     def is_state_complete(self):
         """
@@ -38,3 +29,4 @@ class FlightState(State):
         This function is called on every loop itteration of the main controll loop when this function is active
         """
         pass
+
