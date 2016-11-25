@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from transitions import Machine
-from src.modes import Inactive, RTD#, autospray
+from src.modes import Inactive, RTD, Autospray
 import rospy
 from agrodrone.srv import SetCompanionMode
 from agrodrone.msg import CompanionMode
@@ -30,7 +30,7 @@ class Modes(Machine):
         modes = [
                 Inactive(self.vehicle),
                 RTD(self.vehicle),
-                # autospray(self.vehicle)
+                Autospray(self.vehicle)
                 ]
         self.initialState = modes[0].name
         Machine.__init__(self, states=modes, initial=self.initialState, after_state_change='set_new_mode')

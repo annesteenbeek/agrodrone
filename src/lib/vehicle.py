@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 
 import rospy
-import time
 
 from geometry_msgs.msg import Quaternion, PoseStamped, TwistStamped
 from tf.transformations import quaternion_from_euler
 import math
+from agrodrone.srv import SetTankLevel
 from std_msgs.msg import Header
-
-from mavros.srv import CommandBool, SetMode
-from mavros.msg import State
+from mavros_msgs.srv import CommandBool, SetMode
+from mavros_msgs.msg import Waypoint, WaypointList, CommandCode, State
 
 DEFAULT_FCU_TYPE = "PX4"
 DEFAULT_CONTROL_LOOP_RATE = 100
+DEFAULT_MIN_TANK_LEVEL = 10
 
 
 class Vehicle(object):
@@ -27,11 +27,15 @@ class Vehicle(object):
         self.is_offboard = None
         self.firmware = None
         self.fcu_mode = None    # mode the FCU is currently in
+        self.tank_level = 100 # TODO implement tank and change to None
+        self.mission_list = None
         self.offb_modes = ['OFFBOARD', 'GUIDED']
         # TODO find better method to detect fcu type
         self.fcu_type = rospy.get_param("~fcu_type", DEFAULT_FCU_TYPE)
+        self.min_tank_level = rospy.get_param("~min_tank_level", DEFAULT_MIN_TANK_LEVEL)
 
         # TODO set stream rate
+        rospy.Service('set_tank_level', SetTankLevel, self.handle_set_tank_level)
         self.setup_subscribers()
         self.setup_publishers()
 
@@ -44,6 +48,10 @@ class Vehicle(object):
                 State,
                 self.state_callback)
 
+        rospy.Subscriber("mavros/missions/waypoints",
+                        WaypointList,
+                         self.mission_callback)
+
     def setup_publishers(self):
         self.location_setpoint_publisher = \
                 rospy.Publisher("mavros/setpoint_position/local",
@@ -54,6 +62,16 @@ class Vehicle(object):
                 rospy.Publisher("mavros/setpoint_velocity/cmd_vel",
                         TwistStamped,
                         queue_size=10)
+
+    def handle_set_tank_level(self, data):
+        if data.level <= 100 and data.level >= 0:
+            self.tank_level = data.level
+            result = True
+        else:
+            rospy.logerr("Tank level should be between 0 and 100")
+            result = False
+        return result
+
 
     def set_local_setpoint(self, setpoint):
         """
@@ -91,6 +109,9 @@ class Vehicle(object):
         msg.twist.angular.z = yaw_rate
 
         self.velocity_setpoint_publisher.publish(msg)
+
+    def mission_callback(self, data):
+        self.mission_list = data.waypoints
 
     def position_callback(self, data):
         """
