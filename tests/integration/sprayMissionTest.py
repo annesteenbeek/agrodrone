@@ -7,14 +7,16 @@ import rospy
 import mavros
 import os
 import sys
+import time
+import json
 
 from geometry_msgs.msg import PoseStamped, Quaternion
 from sensor_msgs.msg import NavSatFix
 from mavros_msgs.srv import WaypointPush
-from mavros_msgs.msg import Waypoint
+from mavros_msgs.msg import Waypoint, WaypointList
 from src.lib.vehicle import Vehicle
 from src.nodes.commander import CommanderNode
-from agrodrone.srv import SetCompanionMode
+from agrodrone.srv import SetCompanionMode, SetTankLevel
 
 class AgrodroneSprayMissionTest(unittest.TestCase):
     """
@@ -31,15 +33,36 @@ class AgrodroneSprayMissionTest(unittest.TestCase):
         self.has_global_pos = False
         self.local_position = PoseStamped()
         self.armed = False
-        self.filename = 'sprayTest.mission'
+        self.filename = 'sprayTestSmall.mission'
         self._srv_wp_push = rospy.ServiceProxy('mavros/mission/push', WaypointPush, persistent=True)
-        rospy.Subscriber("")
+        # rospy.Subscriber("~companion_mode")
 
     def position_callback(self, data):
         self.local_position = data
 
     def global_position_callback(self, data):
         self.has_global_pos = True
+
+    def upload_missions(self):
+        actualMissionFile = '/home/anne/catkin_ws/src/agrodrone/tests/integration/' + self.filename
+        wpl = []
+        with open(actualMissionFile) as mission_file:
+            data = json.load(mission_file)
+
+        for item in data["items"]:
+            waypoint = Waypoint()
+            waypoint.command = item["command"]
+            waypoint.autocontinue = item["autoContinue"]
+            waypoint.frame = item["frame"]
+            waypoint.x_lat = item["coordinate"][0]
+            waypoint.y_long = item["coordinate"][1]
+            waypoint.z_alt = item["coordinate"][2]
+            wpl.append(waypoint)
+
+        res = self._srv_wp_push(wpl)
+        self.assertTrue(res.success, "mission could not be transfered" )
+
+
 
     def test_spray_mission(self):
         """Test offboard position control"""
@@ -48,24 +71,25 @@ class AgrodroneSprayMissionTest(unittest.TestCase):
         while not self.has_global_pos:
             self.rate.sleep()
 
-        mission_file = os.path.dirname(os.path.realpath(__file__)) + "/" + self.filename
-        rospy.loginfo("reading mission %s", mission_file)
-        actualMissionFile = '/home/anne/catkin_ws/src/agrodrone/tests/integration/' + self.filename
-        self.assertEqual(mission_file, actualMissionFile, "Incorrect file: %s" % mission_file)
-        # TODO insert waypoints from file
+        self.upload_missions()
         mode_srv = rospy.ServiceProxy('set_companion_mode', SetCompanionMode)
 
         while self.vehicle.mission_list is None:
             self.rate.sleep()
 
         mode_srv("Autospray")
-        self.assertEqual()
-        # self.vehicle.set_mode("AUTO.MISSION")
         self.vehicle.set_arm()
-        # self.commander.run()
+        startTime = rospy.Time.now()
+        setTank = rospy.ServiceProxy("set_tank_level", SetTankLevel)
+        tankFlag = False
         while not rospy.is_shutdown():
+            self.commander.modes.run()
+            if rospy.Time.now() - startTime >= rospy.Duration(30) and not tankFlag:
+                tankResult = setTank(5)
+                tankFlag = True
             self.rate.sleep()
 
+        self.assertTrue(tankResult,"Tank not set to 5")
 
 if __name__ == '__main__':
     import rostest

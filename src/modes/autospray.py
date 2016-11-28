@@ -34,13 +34,10 @@ class Autospray(Mode):
         :return: True/False
         """
         # TODO check if battery is empty or tank is empty
+        result = False
         if self.vehicle.tank_level is not None:
             if self.vehicle.tank_level < self.vehicle.min_tank_level:
                 result = True
-            else:
-                result = False
-        else:
-            result = False # No tank messages received
         return result
 
     def interrupt_to_resume(self):

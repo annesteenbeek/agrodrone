@@ -64,6 +64,11 @@ class TestModes(unittest.TestCase):
         self.modes.cur_mode.run()
         self.assertEqual(self.modes.cur_mode.cur_state.name, 'Pending')
 
+    def testEndOfMode(self):
+        self.modes.to_RTD()
+        self.modes.cur_mode.to_Pending()
+        self.modes.cur_mode.run()
+
 
 # Service test
 #

@@ -17,8 +17,10 @@ class Mode(State, Machine):
         """
         Handle an attempted state transition
         """
-        result = hasattr(self, 'attempt_transition')
-        if result:
+        # TODO handle looping of states better
+        exists = hasattr(self, 'attempt_transition')
+
+        if exists and self.cur_state.name in self.events['attempt_transition'].transitions:
             self.attempt_transition()
         else:
             pass
@@ -26,6 +28,7 @@ class Mode(State, Machine):
     def enter(self, event_data):
         print("Entered mode: " + self.name)
         super(Mode, self).enter(event_data)
+        # Make sure to also initialize the initial state
         self.cur_state.enter(event_data)
 
 

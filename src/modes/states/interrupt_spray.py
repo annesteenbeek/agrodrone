@@ -1,6 +1,8 @@
 #!/user/bin/env python
 
+import rospy
 from src.lib.state import FlightState
+from mavros_msgs.msg import Waypoint, WaypointList, CommandCode
 from mavros_msgs.srv import WaypointPull, WaypointPush, WaypointClear, \
                             WaypointSetCurrent
 
@@ -19,14 +21,33 @@ class InterruptSpray(FlightState):
         # TODO store the current position,
         #  turn it into a waypoint,
         #  modify current set of waypoints, store it
+        backupPoint = Waypoint()
+        backupPoint.command = CommandCode.NAV_WAYPOINT
+        backupPoint.frame = Waypoint.FRAME_GLOBAL_REL_ALT
+        backupPoint.autocontinue = True
+        backupPoint.x_lat = self.vehicle.global_position.latitude
+        backupPoint.y_long = self.vehicle.global_position.longitude
+        newWaypointList = self.vehicle.mission_list
+
+        self.count = 0
+        for waypoint in newWaypointList:
+            if waypoint.is_current:
+                waypoint.is_current = False
+                # set backup waypoint at same height as next waypoint
+                backupPoint.z_alt = waypoint.z_alt
+                newWaypointList.insert(self.count, backupPoint)
+                break
+            self.count += 1
+        push_service = rospy.ServiceProxy("mavros/mission/push", WaypointPush, persistent=True)
         self.vehicle.set_mode("AUTO.RTL")
-
-
+        push_service(newWaypointList)
 
     def exit(self, event_data):
         """
         This function is called when the mode exits this state
         """
+        set_current_service = rospy.ServiceProxy("mavros/mission/set_current", WaypointSetCurrent)
+        set_current_service(self.count)
         super(FlightState, self).exit(event_data)
 
 
@@ -35,5 +56,5 @@ class InterruptSpray(FlightState):
         This function returns True when the state has completed its task
         """
         # TODO check for signal that should be send using service
-        return True
+        return False
 

@@ -9,6 +9,7 @@ from agrodrone.srv import SetTankLevel
 from std_msgs.msg import Header
 from mavros_msgs.srv import CommandBool, SetMode
 from mavros_msgs.msg import Waypoint, WaypointList, CommandCode, State
+from sensor_msgs.msg import NavSatFix
 
 DEFAULT_FCU_TYPE = "PX4"
 DEFAULT_CONTROL_LOOP_RATE = 100
@@ -23,6 +24,7 @@ class Vehicle(object):
     def __init__(self):
         self.position = None
         self.orientation = None
+        self.global_position = None
         self.is_armed = None
         self.is_offboard = None
         self.firmware = None
@@ -44,6 +46,10 @@ class Vehicle(object):
                 PoseStamped,
                 self.position_callback)
 
+        rospy.Subscriber("mavros/global_position/global",
+                         NavSatFix,
+                         self.global_callback)
+
         rospy.Subscriber("mavros/state",
                 State,
                 self.state_callback)
@@ -64,14 +70,16 @@ class Vehicle(object):
                         queue_size=10)
 
     def handle_set_tank_level(self, data):
-        if data.level <= 100 and data.level >= 0:
-            self.tank_level = data.level
+        if 100 >= data.tankLevel >= 0:
+            self.tank_level = data.tankLevel
             result = True
         else:
             rospy.logerr("Tank level should be between 0 and 100")
             result = False
         return result
 
+    def global_callback(self, data):
+        self.global_position = data
 
     def set_local_setpoint(self, setpoint):
         """
