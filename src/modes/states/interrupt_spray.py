@@ -39,7 +39,7 @@ class InterruptSpray(FlightState):
                 break
             self.count += 1
         push_service = rospy.ServiceProxy("mavros/mission/push", WaypointPush, persistent=True)
-        self.vehicle.set_mode("AUTO.RTL")
+        self.vehicle.set_mode_autoland()
         push_service(newWaypointList)
 
     def exit(self, event_data):

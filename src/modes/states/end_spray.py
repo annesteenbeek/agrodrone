@@ -14,7 +14,7 @@ class EndSpray(FlightState):
         This function is called when the mode enters this state
         """
         super(FlightState, self).enter(event_data)
-        self.vehicle.set_mode("AUTO.RTL")
+        self.vehicle.set_mode_autoland()
 
 
     def exit(self, event_data):

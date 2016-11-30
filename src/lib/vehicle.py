@@ -11,7 +11,7 @@ from mavros_msgs.srv import CommandBool, SetMode
 from mavros_msgs.msg import Waypoint, WaypointList, CommandCode, State
 from sensor_msgs.msg import NavSatFix
 
-DEFAULT_FCU_TYPE = "PX4"
+DEFAULT_FCU_TYPE = "Ardupilot"
 DEFAULT_CONTROL_LOOP_RATE = 100
 DEFAULT_MIN_TANK_LEVEL = 10
 
@@ -31,7 +31,9 @@ class Vehicle(object):
         self.fcu_mode = None    # mode the FCU is currently in
         self.tank_level = 100 # TODO implement tank and change to None
         self.mission_list = None
-        self.offb_modes = ['OFFBOARD', 'GUIDED']
+        self.offb_modes = {'PX4': 'OFFBOARD', 'Ardupilot': 'GUIDED'}
+        self.RTL_modes = {'PX4': 'AUTO.RTL', 'Ardupilot': 'RTL'}
+        self.mission_modes = {'PX4': 'AUTO.MISSION', 'Ardupilot': 'AUTO'}
         # TODO find better method to detect fcu type
         self.fcu_type = rospy.get_param("~fcu_type", DEFAULT_FCU_TYPE)
         self.min_tank_level = rospy.get_param("~min_tank_level", DEFAULT_MIN_TANK_LEVEL)
@@ -172,13 +174,27 @@ class Vehicle(object):
     def set_disarm(self):
         self.set_armed_state(False)
 
-    def set_offboard(self):
+    def set_mode_autoland(self):
+        """
+        Transition to the RTL mode
+        """
+        RTL_string = self.RTL_modes[self.fcu_type]
+        self.set_mode(RTL_string)
+
+    def set_mode_mission(self):
+        """
+        Set the FCU in follow waypoint mission mode
+        """
+        mission_string = self.mission_modes[self.fcu_type]
+        self.set_mode(mission_string)
+
+    def set_mode_offboard(self):
         """
         Attempt to transition into offboard mode
         """
         control_loop_rate = rospy.get_param("~control_loop_rate", DEFAULT_CONTROL_LOOP_RATE)
         rate = rospy.Rate(control_loop_rate)
-        offb_mode = self.offb_modes[0] if self.fcu_type is "PX4" else self.offb_modes[1]
+        offb_string = self.offb_modes[self.fcu_type]
         # first send setpoints, else offb mode will be rejected
         for i in range(100):
             if self.is_offboard:
@@ -186,5 +202,5 @@ class Vehicle(object):
             setpoint = [self.position.x, self.position.y, self.position.z, 0]
             self.set_local_setpoint(setpoint)
             rate.sleep()
-        self.set_mode(offb_mode)
+        self.set_mode(offb_string)
 

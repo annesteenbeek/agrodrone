@@ -12,12 +12,15 @@ import json
 
 from geometry_msgs.msg import PoseStamped, Quaternion
 from sensor_msgs.msg import NavSatFix
-from mavros_msgs.srv import WaypointPush
+from mavros_msgs.srv import WaypointPush, CommandTOL
 from mavros_msgs.msg import Waypoint, WaypointList
 from src.lib.vehicle import Vehicle
 from src.nodes.commander import CommanderNode
 from agrodrone.srv import SetCompanionMode, SetTankLevel
+from mavros.mission import QGroundControlWP
 
+# TODO complete misison test
+# TODO include ardupilot auto test
 class AgrodroneSprayMissionTest(unittest.TestCase):
     """
     A test for a spray mission
@@ -33,7 +36,8 @@ class AgrodroneSprayMissionTest(unittest.TestCase):
         self.has_global_pos = False
         self.local_position = PoseStamped()
         self.armed = False
-        self.filename = 'sprayTestSmall.mission'
+        # self.filename = 'ardupilotSprayMission.mission'
+        self.filename = 'arduMissionTest.txt'
         self._srv_wp_push = rospy.ServiceProxy('mavros/mission/push', WaypointPush, persistent=True)
         # rospy.Subscriber("~companion_mode")
 
@@ -46,22 +50,28 @@ class AgrodroneSprayMissionTest(unittest.TestCase):
     def upload_missions(self):
         actualMissionFile = '/home/anne/catkin_ws/src/agrodrone/tests/integration/' + self.filename
         wpl = []
-        with open(actualMissionFile) as mission_file:
-            data = json.load(mission_file)
+        if self.vehicle.fcu_type == "PX4":
+            with open(actualMissionFile) as mission_file:
+                data = json.load(mission_file)
 
-        for item in data["items"]:
-            waypoint = Waypoint()
-            waypoint.command = item["command"]
-            waypoint.autocontinue = item["autoContinue"]
-            waypoint.frame = item["frame"]
-            waypoint.x_lat = item["coordinate"][0]
-            waypoint.y_long = item["coordinate"][1]
-            waypoint.z_alt = item["coordinate"][2]
-            wpl.append(waypoint)
+            for item in data["items"]:
+                waypoint = Waypoint()
+                waypoint.command = item["command"]
+                waypoint.autocontinue = item["autoContinue"]
+                waypoint.frame = item["frame"]
+                waypoint.x_lat = item["coordinate"][0]
+                waypoint.y_long = item["coordinate"][1]
+                waypoint.z_alt = item["coordinate"][2]
+                wpl.append(waypoint)
+        elif self.vehicle.fcu_type == "Ardupilot":
+            mission = QGroundControlWP()
+            for waypoint in mission.read(open(actualMissionFile, 'r')):
+                wpl.append(waypoint)
+        else:
+            rospy.logerr("Unknown fcu type set")
 
         res = self._srv_wp_push(wpl)
         self.assertTrue(res.success, "mission could not be transfered" )
-
 
 
     def test_spray_mission(self):
@@ -77,8 +87,19 @@ class AgrodroneSprayMissionTest(unittest.TestCase):
         while self.vehicle.mission_list is None:
             self.rate.sleep()
 
-        mode_srv("Autospray")
+
         self.vehicle.set_arm()
+        rospy.sleep(1) # wait to receive arming
+        if self.vehicle.fcu_type == "Ardupilot":
+            self.vehicle.set_mode("GUIDED")
+            rospy.sleep(0.5)
+            takeoff = rospy.ServiceProxy('/mavros/cmd/takeoff', CommandTOL)
+            lat = self.vehicle.global_position.latitude
+            lng = self.vehicle.global_position.longitude
+            takeoff(0, 0, lat, lng, 600)
+            rospy.sleep(10)
+
+        mode_srv("Autospray")
         startTime = rospy.Time.now()
         setTank = rospy.ServiceProxy("set_tank_level", SetTankLevel)
         tankFlag = False

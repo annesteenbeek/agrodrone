@@ -14,7 +14,7 @@ class TrackSpray(FlightState):
         This function is called when the mode enters this state
         """
         # TODO check if tank is connected and do pre spray checks...
-        self.vehicle.set_mode("AUTO.MISSION")
+        self.vehicle.set_mode_mission()
         self.final_waypoint_flag = False
         super(TrackSpray, self).enter(event_data)
 

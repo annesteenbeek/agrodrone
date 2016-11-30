@@ -67,7 +67,7 @@ class MavrosOffboardPosctlTest(unittest.TestCase):
             # (need to wait the first few rounds until PX4 has the offboard stream)
             if not self.armed and count > 5:
                 self.vehicle.set_arm()
-                self.vehicle.set_offboard()
+                self.vehicle.set_mode_offboard()
                 self.armed = True
 
             if self.is_at_position(x, y, z, 1):
