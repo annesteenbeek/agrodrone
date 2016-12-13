@@ -8,7 +8,7 @@ import math
 from agrodrone.srv import SetTankLevel
 from std_msgs.msg import Header
 from mavros_msgs.srv import CommandBool, SetMode
-from mavros_msgs.msg import Waypoint, WaypointList, CommandCode, State
+from mavros_msgs.msg import Waypoint, WaypointList, CommandCode, State, ExtendedState
 from sensor_msgs.msg import NavSatFix
 
 DEFAULT_FCU_TYPE = "Ardupilot"
@@ -28,6 +28,7 @@ class Vehicle(object):
         self.is_armed = None
         self.is_offboard = None
         self.firmware = None
+        self.landed_state = None
         self.fcu_mode = None    # mode the FCU is currently in
         self.tank_level = 100 # TODO implement tank and change to None
         self.mission_list = None
@@ -51,6 +52,10 @@ class Vehicle(object):
         rospy.Subscriber("mavros/global_position/global",
                          NavSatFix,
                          self.global_callback)
+
+        rospy.Subscriber("mavros/extended_state",
+                         ExtendedState,
+                         self.extended_callback)
 
         rospy.Subscriber("mavros/state",
                 State,
@@ -79,6 +84,14 @@ class Vehicle(object):
             rospy.logerr("Tank level should be between 0 and 100")
             result = False
         return result
+
+    def extended_callback(self, data):
+        if data.landed_state == 0:
+            self.landed_state = None
+        elif data.landed_state == 1:
+            self.landed_state = True
+        elif data.landed_state == 2:
+            self.landed_state = False
 
     def global_callback(self, data):
         self.global_position = data

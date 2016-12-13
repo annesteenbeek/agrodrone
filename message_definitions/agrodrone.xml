@@ -1,0 +1,13 @@
+<?xml version='1.0'?>
+<mavlink>
+    <messages>
+        <message id="239" name="TANK_LEVEL">
+            <description>Spray tank level reporting</description>
+            <field name="target_system" type="uint8_t">System ID</field>
+            <field name="target_component" type="uint8_t">Component ID</field>
+            <field name="perc" type="uint8_t">tank level percentage</field>
+            <field name="raw" type="uint32_t">raw tank level</field>
+        </message>
+    </messages>
+</mavlink>
+

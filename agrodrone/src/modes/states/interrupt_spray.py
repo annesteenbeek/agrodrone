@@ -56,5 +56,5 @@ class InterruptSpray(FlightState):
         This function returns True when the state has completed its task
         """
         # TODO check for signal that should be send using service
-        return False
+        return self.vehicle.tank_level > 90
 

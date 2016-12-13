@@ -108,6 +108,11 @@ class AgrodroneSprayMissionTest(unittest.TestCase):
             if rospy.Time.now() - startTime >= rospy.Duration(30) and not tankFlag:
                 tankResult = setTank(5)
                 tankFlag = True
+
+            if tankFlag and self.vehicle.landed_state:
+                # after landing, fill tank up, resume missoin
+                setTank(100)
+
             self.rate.sleep()
 
         self.assertTrue(tankResult,"Tank not set to 5")
