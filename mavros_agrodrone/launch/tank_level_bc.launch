@@ -1,0 +1,19 @@
+<launch>
+    <!-- vim: set ft=xml noet : -->
+	
+	<arg name="fcu_rul" default="/dev/ttyACM0:57600" />
+	<arg name="gcs_url" default="" />
+	<arg name="tgt_system" default="1" />
+	<arg name="tgt_component" default="1" />
+	<arg name="log_output" default="screen" />
+
+	<include file="$(find mavros)/launch/apm.launch">
+		<arg name="fcu_url" value="$(arg fcu_url)" />
+		<arg name="gcs_url" value="" />
+		<arg name="tgt_system" value="$(arg tgt_system)" />
+		<arg name="tgt_component" value="$(arg tgt_component)" />
+	</include>
+
+	<node pkg="mavros_agrodrone" type="mavros_node" name="tank_level_bc" output="screen" />
+
+</launch>

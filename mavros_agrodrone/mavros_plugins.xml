@@ -1,0 +1,5 @@
+<library path="lib/libmavros_agrodrone">
+    <class name="tank_level" type="mavplugin::TankLevelPlugin" base_class_type="mavplugin::MavRosPlugin">
+        <description>Publish connected spray tank level.</description>
+    </class>
+</library>
