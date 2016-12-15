@@ -48,7 +48,6 @@ private:
         mavlink_message_t msg;
 
         const uint8_t tgt_sys_id = 0;
-        const uint8_t tgt_comp_id = 0;
         const uint8_t _percentage = 20;
         const uint32_t _raw = 400;
 
@@ -56,7 +55,6 @@ private:
                 UAS_PACK_CHAN(uas),
                 &msg,
                 tgt_sys_id,
-                tgt_comp_id,
                 _percentage,
                 _raw);
         UAS_FCU(uas)->send_message(&msg);

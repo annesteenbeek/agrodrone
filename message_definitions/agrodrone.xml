@@ -1,12 +1,69 @@
 <?xml version='1.0'?>
 <mavlink>
+
+    <enums>
+        <enum name="AGRO_MODE">
+            <description>These entries encode the modes for the companion computer.</description>
+            <entry value="128" name="AGRO_MODE_RTD">
+                <description>0b10000000 Return To Dock mode.</description>
+            </entry>
+            <entry value="64" name="AGRO_MODE_AUTOSPRAY">
+                <description>0b01000000 Autospray mode.</description>
+            </entry>
+            <entry value="32" name="AGRO_MODE_INACTIVE">
+                <description>0b00100000 Companion pc is inactive.</description>
+            </entry>
+            <entry value="1" name="AGRO_MODE_UNK">
+                <description>Unknown agro mode.</description>
+            </entry>
+        </enum>
+
+        <enum name="AGRO_SUB_MODE">
+            <description>The sub mode which is active on the companion computer</description>
+            <entry value="1" name="AGRO_SUB_MODE_UNK">
+                <description>Case where the sub mode is not yet known to mavlink</description>
+            </entry>
+            <entry value="2" name="AGRO_SUB_MODE_PENDING">
+                <description>Not doing anything.</description>
+            </entry>
+            <entry value="3" name="AGRO_SUB_MODE_TRACK_SPRAY">
+                <description>Following a spray mission.</description>
+            </entry>
+            <entry value="4" name="AGRO_SUB_MODE_RESUME_SPRAY">
+                <description>Resume the spray mission.</description>
+            </entry>
+            <entry value="5" name="AGRO_SUB_MODE_DOCKED">
+                <description>Currently on dock.</description>
+            </entry>
+            <entry value="6" name="AGRO_SUB_MODE_POSITION_ABOVE_DOCK">
+                <description>Moving above the dock.</description>
+            </entry>
+            <!-- <entry value="7" name="AGRO_SUB_MODE_PENDING"> -->
+            <!--     <description>Not doing anything</description> -->
+            <!-- </entry> -->
+        </enum>
+    </enums>
+
     <messages>
-        <message id="239" name="TANK_LEVEL">
+        <message id="555" name="TANK_LEVEL">
             <description>Spray tank level reporting</description>
             <field name="target_system" type="uint8_t">System ID</field>
-            <field name="target_component" type="uint8_t">Component ID</field>
             <field name="perc" type="uint8_t">tank level percentage</field>
             <field name="raw" type="uint32_t">raw tank level</field>
+        </message>
+
+        <message id="556" name="SET_AGRO_MODE">
+            <description>Set the mode for the companion computer system, as defined by the enum AGRO_MODE</description>
+            <field type="uint8_t" name="target_system">The system setting the mode</field>
+            <field type="uint8_t" name="agro_mode" enum="AGRO_MODE">The new mode to be set on the companion computer</field>
+        </message>
+
+        <message id="557" name="GET_AGRO_MODE">
+            <description>Message for broadcasting the current Agro mode and sub-mode to the rest of the system</description>
+            <field type="uint8_t" name="target_system">The system to receive the message</field>
+            <field type="uint8_t" name="agro_mode" enum="AGRO_MODE">The current mode of the companion computer</field>
+            <!-- TODO: include other enums for state as well -->
+            <field type="uint8_t" name="agro_sub_mode" enum="AGRO_SUB_MODE">The current sub mode of the companion computer</field> 
         </message>
     </messages>
 </mavlink>

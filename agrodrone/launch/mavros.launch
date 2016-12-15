@@ -1,20 +1,16 @@
 <launch>
-    <!-- MAVROS launch script PX4 (default) -->
+    <!-- vim: set ft=xml noet : -->
 
     <arg name="ns" default="/" />
     <arg name="fcu_url" default="" />
     <arg name="gcs_url" default="udp://:14550@:14555" />
     <arg name="tgt_system" default="1" />
     <arg name="tgt_component" default="1" />
-    <arg name="pluginlists_yaml" default="$(find mavros)/launch/px4_pluginlists.yaml" />
-    <arg name="config_yaml" default="$(find mavros)/launch/px4_config.yaml" />
     <arg name="log_output" default="log"/>
 
     <group ns="$(arg ns)">
         <include file="$(find mavros)/launch/node.launch">
             <arg name="log_output"  value="$(arg log_output)"/>
-            <arg name="pluginlists_yaml" value="$(arg pluginlists_yaml)" />
-            <arg name="config_yaml" value="$(arg config_yaml)" />
 
             <arg name="fcu_url" value="$(arg fcu_url)" />
             <arg name="gcs_url" value="$(arg gcs_url)" />
@@ -22,4 +18,9 @@
             <arg name="tgt_component" value="$(arg tgt_component)" />
         </include>
     </group>
+
+	<node pkg="agrodrone" type="commander.py" name="commander">
+		<rosparam file="$(find agrudrone)/launch/parameters.yaml" command="load" />
+	</node>
+
 </launch>
