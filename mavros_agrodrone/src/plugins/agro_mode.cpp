@@ -7,8 +7,8 @@
 #include <mavros/mavros_plugin.h>
 #include <pluginlib/class_list_macros.h>
 
-#include <agrodrone/companion_mode.h>
-#include <agrodrone/set_companion_mode.h>
+#include <agrodrone/CompanionMode.h>
+#include <agrodrone/SetCompanionMode.h>
 
 namespace mavplugin {
 /**
@@ -17,32 +17,33 @@ namespace mavplugin {
 class AgroModePlugin : public MavRosPlugin{
 public:
     AgroModePlugin():
-        tl_nh("~"),
+        am_nh("~"),
         uas(nullptr)
     { };
 
     void initialize(UAS &uas_) {
         uas = &uas_;
 
-        agro_mode_sub = tl_nh.subscribe("agro_mode", 10, &AgroModePlugin::send_agro_mode_cb, this);
-        ros::ServiceClient client = tl_nh.ServiceClient<agrodrone::SetCompanionMode>("set_companion_mode");
+        agro_mode_sub = am_nh.subscribe("agro_mode", 10, &AgroModePlugin::send_agro_mode_cb, this);
+        client = am_nh.serviceClient<agrodrone::SetCompanionMode>("set_companion_mode");
     }
 
     const message_map get_rx_handlers() {
         return {
-            MESSAGE_HANDLER(MAVLINK_MSG_ID_SET_AGR_MODE, &AgroModePlugin::handle_set_agro_mode); 
+            MESSAGE_HANDLER(MAVLINK_MSG_ID_SET_AGRO_MODE, &AgroModePlugin::handle_set_agro_mode)
         };
     }
 
 private:
-    ros::NodeHandle tl_nh;
+    ros::NodeHandle am_nh;
     UAS *uas;
 
-    ros::Subscriber tank_level_sub;
+    ros::Subscriber agro_mode_sub;
+    ros::ServiceClient client;
 
     /* -*- rx handlers -*- */
     void handle_set_agro_mode(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
-        mavlink_msg_set_agro_mode_t sam;
+        mavlink_set_agro_mode_t sam;
         mavlink_msg_set_agro_mode_decode(msg, &sam);
         
         agrodrone::SetCompanionMode srv;
@@ -70,44 +71,42 @@ private:
                 agro_mode,
                 agro_sub_mode);
         UAS_FCU(uas)->send_message(&msg);
-        }
+    }
 
-    static uint8_t string_to_mode_enum(std::string agro_mode) {
-        //TODO convert case switches to map? 
-        switch(agro_mode) {
-            case "Autospray":   return AGRO_MODE_AUTOSPRAY;
-            case "RTD":         return AGRO_MODE_RTD;
-            case "Inactive":    return AGRO_MODE_INACTIVE;
-            default:
-                ROS_ERROR_ONCE("Tried to send unknown mode to MAVLink: %s", msg.mode);
+    static uint8_t string_to_mode_enum(std::string const& agro_mode) {
+        //TODO convert case switches to boost bi-map? 
+            if(agro_mode == "Autospray")   return AGRO_MODE_AUTOSPRAY;
+            if(agro_mode == "RTD")         return AGRO_MODE_RTD;
+            if(agro_mode == "Inactive")    return AGRO_MODE_INACTIVE;
+            else {
+                /* ROS_ERROR_ONCE("Tried to send unknown mode to MAVLink: %s", agro_mode); */
                 return AGRO_MODE_UNK;
+            }
         } 
-    } 
 
-    static std:string mode_enum_to_string(uint8_t &AGRO_MODE) {
+    static std::string mode_enum_to_string(uint8_t &AGRO_MODE) {
         switch(AGRO_MODE) {
             case AGRO_MODE_AUTOSPRAY:   return "Autospray";
             case AGRO_MODE_RTD:         return "RTD";
             case AGRO_MODE_INACTIVE:    return "Inactive";
             case AGRO_MODE_UNK:         return "";
             default:
-                ROS_ERROR_ONCE("Tried to convert unknown enum to string: %d", AGRO_MODE);
+                /* ROS_ERROR_ONCE("Tried to convert unknown enum to string: %d", AGRO_MODE); */
                 return "";
         }
     }
 
-    static uint8_t string_to_sub_mode_enum(std::string agro_sub_mode) {
-        switch(agro_sub_mode) {
-            case "Pending":     return AGRO_SUB_MODE_PENDING;
-            case "TrackSpray"   return AGRO_SUB_MODE_TRACK_SPRAY;
-            case "ResumeSpray"  return AGRO_SUB_MODE_RESUME_SPRAY;
-            case "Docked"       return AGRO_SUB_MODE_DOCKED;
-            case "PositionAboveDock"    return AGRO_SUB_MODE_POSITION_ABOVE_DOCK;
-            default:
+    static uint8_t string_to_sub_mode_enum(std::string const& agro_sub_mode) {
+            if(agro_sub_mode == "Pending")           return AGRO_SUB_MODE_PENDING;
+            if(agro_sub_mode == "TrackSpray")        return AGRO_SUB_MODE_TRACK_SPRAY;
+            if(agro_sub_mode == "ResumeSpray")       return AGRO_SUB_MODE_RESUME_SPRAY;
+            if(agro_sub_mode == "Docked")            return AGRO_SUB_MODE_DOCKED;
+            if(agro_sub_mode == "PositionAboveDock") return AGRO_SUB_MODE_POSITION_ABOVE_DOCK;
+            else{
                 // TODO: make sure to warn on every unknown mode change, not just the first
-                ROS_WARN_ONCE("Tried to send unknown sub_mode to MAVLink: %s", msg.state);
+                /* ROS_WARN_ONCE("Tried to send unknown sub_mode to MAVLink: %s", agro_sub_mode); */
                 return AGRO_SUB_MODE_UNK;
-        }
+            }
     }
 }; // AgroModePlugin    
 }; // namespace mavplugin

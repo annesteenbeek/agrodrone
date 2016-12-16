@@ -2,4 +2,7 @@
     <class name="tank_level" type="mavplugin::TankLevelPlugin" base_class_type="mavplugin::MavRosPlugin">
         <description>Publish connected spray tank level.</description>
     </class>
+    <class name="agro_mode" type="mavplugin::AgroModePlugin" base_class_type="mavplugin::MavRosPlugin">
+        <description>Handle setting and publishing of the companion computer mode.</description>
+    </class>
 </library>
