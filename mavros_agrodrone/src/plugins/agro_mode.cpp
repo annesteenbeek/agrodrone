@@ -25,12 +25,13 @@ public:
         uas = &uas_;
 
         agro_mode_sub = am_nh.subscribe("agro_mode", 10, &AgroModePlugin::send_agro_mode_cb, this);
-        client = am_nh.serviceClient<agrodrone::SetCompanionMode>("set_companion_mode");
+        client = am_nh.serviceClient<agrodrone::SetCompanionMode>("/set_companion_mode");
     }
 
     const message_map get_rx_handlers() {
         return {
-            MESSAGE_HANDLER(MAVLINK_MSG_ID_SET_AGRO_MODE, &AgroModePlugin::handle_set_agro_mode)
+/* MAVLINK_MSG_ID_SET_AGRO_MODE */
+            MESSAGE_HANDLER(239, &AgroModePlugin::handle_set_agro_mode)
         };
     }
 
@@ -43,15 +44,17 @@ private:
 
     /* -*- rx handlers -*- */
     void handle_set_agro_mode(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+        ROS_INFO("Recived mode change");
         mavlink_set_agro_mode_t sam;
         mavlink_msg_set_agro_mode_decode(msg, &sam);
         
+
         agrodrone::SetCompanionMode srv;
         srv.request.mode_to_set = AgroModePlugin::mode_enum_to_string(sam.agro_mode);
 
         // Service returns false if it was unable to set agro mode.
         if (!client.call(srv)) {
-            ROS_ERROR("Unable to set Agro mode: %d", sam.agro_mode); 
+            ROS_ERROR("Unable to set Agro mode: %u", sam.agro_mode); 
             // TODO add qgroundcontrol responses for failures and warnings
         }
     }

@@ -55,6 +55,7 @@
         <message id="239" name="SET_AGRO_MODE">
             <description>Set the mode for the companion computer system, as defined by the enum AGRO_MODE</description>
             <field type="uint8_t" name="target_system">The system setting the mode</field>
+            <field type="uint8_t" name="target_component">The target component</field>
             <field type="uint8_t" name="agro_mode" enum="AGRO_MODE">The new mode to be set on the companion computer</field>
         </message>
 

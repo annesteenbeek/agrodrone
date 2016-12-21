@@ -7,7 +7,7 @@ from mavros_agrodrone.msg import TankLevel
 
 def run():
     rospy.init_node("tank_level_test")
-    rate = rospy.Rate(100)
+    rate = rospy.Rate(1)
     tank_pub = rospy.Publisher("mavros/tank_level", TankLevel, queue_size=10) 
     
     tank_level = 10
