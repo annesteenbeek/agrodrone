@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 2.8.3)
 project(mavros_agrodrone)
 
 find_package(catkin REQUIRED COMPONENTS
+  message_generation
   mavros
   mavros_msgs
   std_msgs
-  message_generation
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
@@ -36,13 +36,14 @@ catkin_package(
   DEPENDS Boost
 )
 
+
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${mavlink_INCLUDE_DIRS}
 )
 
 add_library(mavros_agrodrone
-  src/plugins/tank_level.cpp
+    #  src/plugins/tank_level.cpp
   src/plugins/agro_mode.cpp
 )
 
@@ -50,6 +51,9 @@ target_link_libraries(mavros_agrodrone
   ${mavros_LIBRARIES}
   ${catkin_LIBRARIES}
 )
+
+# make sure messages are generated first (causes problems on lower cored machines)
+add_dependencies(mavros_agrodrone mavros_agrodrone_generate_messages_cpp)
 
 install(
   TARGETS
