@@ -1,8 +1,8 @@
 <library path="lib/libmavros_agrodrone">
-    <class name="tank_level" type="mavplugin::TankLevelPlugin" base_class_type="mavplugin::MavRosPlugin">
+    <class name="tank_level" type="mavros::agro_plugins::TankLevelPlugin" base_class_type="mavros::plugin::PluginBase">
         <description>Publish connected spray tank level.</description>
     </class>
-    <class name="agro_mode" type="mavplugin::AgroModePlugin" base_class_type="mavplugin::MavRosPlugin">
+    <class name="agro_mode" type="mavros::agro_plugins::AgroModePlugin" base_class_type="mavros::plugin::PluginBase">
         <description>Handle setting and publishing of the companion computer mode.</description>
     </class>
 </library>
