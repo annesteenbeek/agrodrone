@@ -5,36 +5,34 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <pluginlib/class_list_macros.h>
 
 #include <mavros_agrodrone/TankLevel.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace agro_plugins{
 /**
  * @brief tank level plugin
  *
  * broadcast the level of the spray tank connected to the companion computer
  */
-class TankLevelPlugin : public MavRosPlugin{
+class TankLevelPlugin : public plugin::PluginBase {
 public:
-    TankLevelPlugin():
-        tl_nh("~"),
-        uas(nullptr)
+    TankLevelPlugin(): PluginBase(),
+        tl_nh("~")
     { };
 
     void initialize(UAS &uas_) {
-        uas = &uas_;
+        PluginBase::initialize(uas_);
 
         tank_level_sub = tl_nh.subscribe("tank_level", 10, &TankLevelPlugin::tank_level_cb, this);
     }
 
-    const message_map get_rx_handlers() {
+    Subscriptions get_subscriptions() {
         return { /* Rx disabled */ };
     }
 
 private:
     ros::NodeHandle tl_nh;
-    UAS *uas;
 
     ros::Subscriber tank_level_sub;
 
@@ -45,21 +43,21 @@ private:
 
     void set_tank_level(const uint8_t percentage, const uint32_t raw) {
 
-        mavlink_message_t msg;
+        mavlink::agrodrone::msg::TANK_LEVEL tank;
 
         const uint8_t tgt_sys_id = 0;
         const uint8_t _percentage = 20;
         const uint32_t _raw = 400;
 
-        mavlink_msg_tank_level_pack_chan(
-                UAS_PACK_CHAN(uas),
-                &msg,
-                tgt_sys_id,
-                _percentage,
-                _raw);
-        UAS_FCU(uas)->send_message(&msg);
+        tank.target_system = tgt_sys_id;
+        tank.perc = _percentage;
+        tank.raw = _raw;
+
+        UAS_FCU(m_uas)->send_message_ignore_drop(tank);
         }
 }; // TankLevelPlugin    
-}; // namespace mavplugin
+}  // agro_plugins
+} // namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::TankLevelPlugin, mavplugin::MavRosPlugin)
+#include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(mavros::agro_plugins::TankLevelPlugin, mavros::plugin::PluginBase)

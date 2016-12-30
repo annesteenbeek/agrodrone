@@ -5,49 +5,45 @@
  */
 
 #include <mavros/mavros_plugin.h>
-#include <pluginlib/class_list_macros.h>
 
 #include <agrodrone/CompanionMode.h>
 #include <agrodrone/SetCompanionMode.h>
 
-namespace mavplugin {
+namespace mavros {
+namespace agro_plugins{
+using utils::enum_value;
+using mavlink::agrodrone::AGRO_SUB_MODE;
 /**
  * @brief handle the state messages of the companion computer from and to MAVLink
  */
-class AgroModePlugin : public MavRosPlugin{
+class AgroModePlugin : public plugin::PluginBase {
 public:
-    AgroModePlugin():
-        am_nh("~"),
-        uas(nullptr)
+    AgroModePlugin(): PluginBase(),
+        am_nh("~")
     { };
 
     void initialize(UAS &uas_) {
-        uas = &uas_;
+        PluginBase::initialize(uas_);
 
         agro_mode_sub = am_nh.subscribe("agro_mode", 10, &AgroModePlugin::send_agro_mode_cb, this);
         client = am_nh.serviceClient<agrodrone::SetCompanionMode>("/set_companion_mode");
     }
 
-    const message_map get_rx_handlers() {
+    Subscriptions get_subscriptions() {
         return {
-/* MAVLINK_MSG_ID_SET_AGRO_MODE */
-            MESSAGE_HANDLER(239, &AgroModePlugin::handle_set_agro_mode)
+            make_handler(&AgroModePlugin::handle_set_agro_mode)
         };
     }
 
 private:
     ros::NodeHandle am_nh;
-    UAS *uas;
 
     ros::Subscriber agro_mode_sub;
     ros::ServiceClient client;
 
     /* -*- rx handlers -*- */
-    void handle_set_agro_mode(const mavlink_message_t *msg, uint8_t sysid, uint8_t compid) {
+    void handle_set_agro_mode(const mavlink::mavlink_message_t *msg, mavlink::agrodrone::msg::SET_AGRO_MODE &sam) {
         ROS_INFO("Recived mode change");
-        mavlink_set_agro_mode_t sam;
-        mavlink_msg_set_agro_mode_decode(msg, &sam);
-        
 
         agrodrone::SetCompanionMode srv;
         srv.request.mode_to_set = AgroModePlugin::mode_enum_to_string(sam.agro_mode);
@@ -61,38 +57,37 @@ private:
 
 
     void send_agro_mode_cb(const agrodrone::CompanionMode::ConstPtr &req) {
-        mavlink_message_t msg;
+        mavlink::agrodrone::msg::GET_AGRO_MODE mode;
 
         const uint8_t tgt_sys_id = 0; // Broadcast this message
         uint8_t agro_mode = AgroModePlugin::string_to_mode_enum(req->mode);
         uint8_t agro_sub_mode = AgroModePlugin::string_to_sub_mode_enum(req->state);
 
-        mavlink_msg_get_agro_mode_pack_chan(
-                UAS_PACK_CHAN(uas),
-                &msg,
-                tgt_sys_id,
-                agro_mode,
-                agro_sub_mode);
-        UAS_FCU(uas)->send_message(&msg);
+        mode.target_system = tgt_sys_id;
+        mode.agro_mode = agro_mode;
+        mode.agro_sub_mode = agro_sub_mode;
+        UAS_FCU(m_uas)->send_message_ignore_drop(mode);
     }
 
     static uint8_t string_to_mode_enum(std::string const& agro_mode) {
         //TODO convert case switches to boost bi-map? 
-            if(agro_mode == "Autospray")   return AGRO_MODE_AUTOSPRAY;
-            if(agro_mode == "RTD")         return AGRO_MODE_RTD;
-            if(agro_mode == "Inactive")    return AGRO_MODE_INACTIVE;
+            using mavlink::agrodrone::AGRO_MODE;
+            if(agro_mode == "Autospray")   return enum_value(AGRO_MODE::AUTOSPRAY);
+            if(agro_mode == "RTD")         return enum_value(AGRO_MODE::RTD);
+            if(agro_mode == "Inactive")    return enum_value(AGRO_MODE::INACTIVE);
             else {
                 /* ROS_ERROR_ONCE("Tried to send unknown mode to MAVLink: %s", agro_mode); */
-                return AGRO_MODE_UNK;
+                return enum_value(AGRO_MODE::UNK);
             }
         } 
 
-    static std::string mode_enum_to_string(uint8_t &AGRO_MODE) {
-        switch(AGRO_MODE) {
-            case AGRO_MODE_AUTOSPRAY:   return "Autospray";
-            case AGRO_MODE_RTD:         return "RTD";
-            case AGRO_MODE_INACTIVE:    return "Inactive";
-            case AGRO_MODE_UNK:         return "";
+    static std::string mode_enum_to_string(uint8_t &_AGRO_MODE) {
+        using mavlink::agrodrone::AGRO_MODE;
+        switch(_AGRO_MODE) {
+            case enum_value(AGRO_MODE::AUTOSPRAY):   return "Autospray";
+            case enum_value(AGRO_MODE::RTD):         return "RTD";
+            case enum_value(AGRO_MODE::INACTIVE):    return "Inactive";
+            case enum_value(AGRO_MODE::UNK):         return "";
             default:
                 /* ROS_ERROR_ONCE("Tried to convert unknown enum to string: %d", AGRO_MODE); */
                 return "";
@@ -100,18 +95,21 @@ private:
     }
 
     static uint8_t string_to_sub_mode_enum(std::string const& agro_sub_mode) {
-            if(agro_sub_mode == "Pending")           return AGRO_SUB_MODE_PENDING;
-            if(agro_sub_mode == "TrackSpray")        return AGRO_SUB_MODE_TRACK_SPRAY;
-            if(agro_sub_mode == "ResumeSpray")       return AGRO_SUB_MODE_RESUME_SPRAY;
-            if(agro_sub_mode == "Docked")            return AGRO_SUB_MODE_DOCKED;
-            if(agro_sub_mode == "PositionAboveDock") return AGRO_SUB_MODE_POSITION_ABOVE_DOCK;
+        using mavlink::agrodrone::AGRO_SUB_MODE;
+            if(agro_sub_mode == "Pending")           return enum_value(AGRO_SUB_MODE::PENDING);
+            if(agro_sub_mode == "TrackSpray")        return enum_value(AGRO_SUB_MODE::TRACK_SPRAY);
+            if(agro_sub_mode == "ResumeSpray")       return enum_value(AGRO_SUB_MODE::RESUME_SPRAY);
+            if(agro_sub_mode == "Docked")            return enum_value(AGRO_SUB_MODE::DOCKED);
+            if(agro_sub_mode == "PositionAboveDock") return enum_value(AGRO_SUB_MODE::POSITION_ABOVE_DOCK);
             else{
                 // TODO: make sure to warn on every unknown mode change, not just the first
                 /* ROS_WARN_ONCE("Tried to send unknown sub_mode to MAVLink: %s", agro_sub_mode); */
-                return AGRO_SUB_MODE_UNK;
+                return enum_value(AGRO_SUB_MODE::UNK);
             }
     }
 }; // AgroModePlugin    
-}; // namespace mavplugin
+} // agro_plugins
+} // namespace mavros
 
-PLUGINLIB_EXPORT_CLASS(mavplugin::AgroModePlugin, mavplugin::MavRosPlugin)
+#include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(mavros::agro_plugins::AgroModePlugin, mavros::plugin::PluginBase)

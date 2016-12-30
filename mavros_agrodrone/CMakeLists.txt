@@ -43,8 +43,8 @@ include_directories(
 )
 
 add_library(mavros_agrodrone
-    #  src/plugins/tank_level.cpp
-  src/plugins/agro_mode.cpp
+    src/plugins/tank_level.cpp
+    src/plugins/agro_mode.cpp
 )
 
 target_link_libraries(mavros_agrodrone
