@@ -34,13 +34,13 @@ int get_sensor_value(mcp3008Spi& mcp, int channel) {
         data[1] = 0b10000000 |( ((channel & 7) << 4)); // second byte transmitted -> (SGL/DIF = 1, D2=D1=D0=0)
         data[2] = 0; // third byte transmitted....don't care
 
-        try {
-            mcp.spiWriteRead(data, sizeof(data));
-        } catch(const exception& ex) {
-            /* ROS_WARN(ex.what()); */ 
-            // TODO Fix this
-            /* ROS_WARN("Write error"); */
-        }
+        mcp.spiWriteRead(data, sizeof(data));
+        /* try { */
+        /* } catch(const exception& ex) { */
+        /*     /1* ROS_WARN(ex.what()); *1/ */ 
+        /*     // TODO Fix this */
+        /*     /1* ROS_WARN("Write error"); *1/ */
+        /* } */
 
         int a2dVal = 0;
         a2dVal = (data[1]<< 8) & 0b1100000000; //merge data[1] & data[2] to get result

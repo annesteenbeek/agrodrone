@@ -1,4 +1,4 @@
-#include "mcp3008Spi.h"
+#include "tank_sensor/mcp3008Spi.h"
 using namespace std;
 /**********************************************************
  * spiOpen() :function is called by the constructor.
@@ -12,37 +12,44 @@ int mcp3008Spi::spiOpen(std::string devspi){
     int statusVal = -1;
     this->spifd = open(devspi.c_str(), O_RDWR);
     if(this->spifd < 0){
-        throw runtime_error("could not open SPI device");
+        // runtime_error("could not open SPI device");
+        exit(1);
     }
 
     statusVal = ioctl (this->spifd, SPI_IOC_WR_MODE, &(this->mode));
     if(statusVal < 0){
-        throw runtime_error("Could not set SPIMode (WR)...ioctl fail");
+        // runtime_error("Could not set SPIMode (WR)...ioctl fail");
+        exit(1);
     }
 
     statusVal = ioctl (this->spifd, SPI_IOC_RD_MODE, &(this->mode));
     if(statusVal < 0) {
-      throw runtime_error("Could not set SPIMode (RD)...ioctl fail");
+      // runtime_error("Could not set SPIMode (RD)...ioctl fail");
+      exit(1);
     }
 
     statusVal = ioctl (this->spifd, SPI_IOC_WR_BITS_PER_WORD, &(this->bitsPerWord));
     if(statusVal < 0) {
-      throw runtime_error("Could not set SPI bitsPerWord (WR)...ioctl fail");
+      // runtime_error("Could not set SPI bitsPerWord (WR)...ioctl fail");
+      exit(1);
     }
 
     statusVal = ioctl (this->spifd, SPI_IOC_RD_BITS_PER_WORD, &(this->bitsPerWord));
     if(statusVal < 0) {
-      throw runtime_error("Could not set SPI bitsPerWord(RD)...ioctl fail");
+      // runtime_error("Could not set SPI bitsPerWord(RD)...ioctl fail");
+      exit(1);
     }
 
     statusVal = ioctl (this->spifd, SPI_IOC_WR_MAX_SPEED_HZ, &(this->speed));
     if(statusVal < 0) {
-      throw runtime_error("Could not set SPI speed (WR)...ioctl fail");
+      // runtime_error("Could not set SPI speed (WR)...ioctl fail");
+      exit(1);
     }
 
     statusVal = ioctl (this->spifd, SPI_IOC_RD_MAX_SPEED_HZ, &(this->speed));
     if(statusVal < 0) {
-      throw runtime_error("Could not set SPI speed (RD)...ioctl fail");
+      // runtime_error("Could not set SPI speed (RD)...ioctl fail");
+      exit(1);
     }
     return statusVal;
 }
@@ -67,7 +74,7 @@ int mcp3008Spi::spiClose(){
  * device. Data shifted in from the spidev device is saved back into
  * "data".
  * ******************************************************************/
-int mcp3008Spi::spiWriteRead( unsigned char *data, int length){
+int mcp3008Spi::spiWriteRead(unsigned char *data, int length){
 
   struct spi_ioc_transfer spi[length];
   int i = 0;
@@ -89,7 +96,8 @@ int mcp3008Spi::spiWriteRead( unsigned char *data, int length){
  retVal = ioctl (this->spifd, SPI_IOC_MESSAGE(length), &spi) ;
 
  if(retVal < 0){
-    throw runtime_error("Problem transmitting spi data..ioctl");
+    // runtime_error("Problem transmitting spi data..ioctl");
+    exit(1);
  }
 
 return retVal;
