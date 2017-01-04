@@ -23,7 +23,7 @@
 #include <ros/ros.h>
 #include "mavros_agrodrone/TankLevel.h"
 
-#define DEFAULT_RATE 100
+#define DEFAULT_RATE 10
 
 using namespace std;
 
@@ -57,9 +57,11 @@ int main(int argc, char **argv) {
     while(ros::ok()) {
         
         int tank_raw = get_sensor_value(a2d, a2dChannel);
+        int percentage = (tank_raw/1024)*100;
 
         mavros_agrodrone::TankLevel msg;
         msg.raw = tank_raw;
+        msg.percentage = percentage;
 
         tank_pub.publish(msg);
 

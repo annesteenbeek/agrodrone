@@ -24,7 +24,7 @@ public:
     void initialize(UAS &uas_) {
         PluginBase::initialize(uas_);
 
-        tank_level_sub = tl_nh.subscribe("tank_level", 10, &TankLevelPlugin::tank_level_cb, this);
+        tank_level_sub = tl_nh.subscribe("/tank_sensor/tank_level", 10, &TankLevelPlugin::tank_level_cb, this);
     }
 
     Subscriptions get_subscriptions() {
@@ -46,12 +46,10 @@ private:
         mavlink::agrodrone::msg::TANK_LEVEL tank;
 
         const uint8_t tgt_sys_id = 0;
-        const uint8_t _percentage = 20;
-        const uint32_t _raw = 400;
 
         tank.target_system = tgt_sys_id;
-        tank.perc = _percentage;
-        tank.raw = _raw;
+        tank.perc = percentage;
+        tank.raw = raw;
 
         UAS_FCU(m_uas)->send_message_ignore_drop(tank);
         }
