@@ -19,24 +19,27 @@
  *
  *
  * *********************************************************************/
-#include "mcp3008Spi.h"
-#include "ros/ros.h"
+#include "tank_sensor/mcp3008Spi.h"
+#include <ros/ros.h>
+/* #include <ros/console.h> */
 #include "mavros_agrodrone/TankLevel.h"
 
 #define DEFAULT_RATE 100
 
 using namespace std;
 
-int get_sensor_value(mcp3008Spi& a2d, int a2dChannel) {
+int get_sensor_value(mcp3008Spi& mcp, int channel) {
         unsigned char data[3];
         data[0] = 1;  //  first byte transmitted -> start bit
-        data[1] = 0b10000000 |( ((a2dChannel & 7) << 4)); // second byte transmitted -> (SGL/DIF = 1, D2=D1=D0=0)
+        data[1] = 0b10000000 |( ((channel & 7) << 4)); // second byte transmitted -> (SGL/DIF = 1, D2=D1=D0=0)
         data[2] = 0; // third byte transmitted....don't care
 
         try {
-            a2d.spiWriteRead(data, sizeof(data));
+            mcp.spiWriteRead(data, sizeof(data));
         } catch(const exception& ex) {
-            ROS_WARN(ex.what()); 
+            /* ROS_WARN(ex.what()); */ 
+            // TODO Fix this
+            /* ROS_WARN("Write error"); */
         }
 
         int a2dVal = 0;
@@ -54,16 +57,18 @@ int main(int argc, char **argv) {
     ros::Rate tank_rate(rate);
     ros::Publisher tank_pub = nh.advertise<mavros_agrodrone::TankLevel>("tank_level", 10);
 
-
     try {
-        mcp3008Spi a2d("/dev/spidev0.0", SPI_MODE_0, 1000000, 8);
+        int a = 0;
     } catch(const exception& ex) {
-        ROS_ERROR(ex.what()); 
+        /* ROS_ERROR(ex.what()); */ 
+        // TODO fix this
+        /* ROS_ERROR("Unable to connect to SPI"); */
         return 0;
     }
 
     int a2dChannel = 0;
 
+    mcp3008Spi a2d("/dev/spidev0.0", SPI_MODE_0, 1000000, 8);
     while(ros::ok()) {
         
         int tank_raw = get_sensor_value(a2d, a2dChannel);
