@@ -1,0 +1,6 @@
+<launch>
+    <!-- vim: set ft=xml noet : -->
+
+    <node pkg="tank_sensor" type="tank_sensor_node" name="tank_sensor"/>
+
+</launch>

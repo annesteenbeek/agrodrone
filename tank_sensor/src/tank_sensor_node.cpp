@@ -21,7 +21,6 @@
  * *********************************************************************/
 #include "tank_sensor/mcp3008Spi.h"
 #include <ros/ros.h>
-/* #include <ros/console.h> */
 #include "mavros_agrodrone/TankLevel.h"
 
 #define DEFAULT_RATE 100
@@ -35,12 +34,6 @@ int get_sensor_value(mcp3008Spi& mcp, int channel) {
         data[2] = 0; // third byte transmitted....don't care
 
         mcp.spiWriteRead(data, sizeof(data));
-        /* try { */
-        /* } catch(const exception& ex) { */
-        /*     /1* ROS_WARN(ex.what()); *1/ */ 
-        /*     // TODO Fix this */
-        /*     /1* ROS_WARN("Write error"); *1/ */
-        /* } */
 
         int a2dVal = 0;
         a2dVal = (data[1]<< 8) & 0b1100000000; //merge data[1] & data[2] to get result
@@ -57,18 +50,10 @@ int main(int argc, char **argv) {
     ros::Rate tank_rate(rate);
     ros::Publisher tank_pub = nh.advertise<mavros_agrodrone::TankLevel>("tank_level", 10);
 
-    try {
-        int a = 0;
-    } catch(const exception& ex) {
-        /* ROS_ERROR(ex.what()); */ 
-        // TODO fix this
-        /* ROS_ERROR("Unable to connect to SPI"); */
-        return 0;
-    }
-
+    mcp3008Spi a2d("/dev/spidev0.0", SPI_MODE_0, 1000000, 8);
+    
     int a2dChannel = 0;
 
-    mcp3008Spi a2d("/dev/spidev0.0", SPI_MODE_0, 1000000, 8);
     while(ros::ok()) {
         
         int tank_raw = get_sensor_value(a2d, a2dChannel);

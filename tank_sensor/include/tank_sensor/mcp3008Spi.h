@@ -34,6 +34,7 @@
 #include <string>
 #include <iostream>
 #include <exception>
+#include <ros/console.h>
 
 class mcp3008Spi{
 
