@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     int rate;
     nh.param("/tank_rate", rate, DEFAULT_RATE);
     ros::Rate tank_rate(rate);
-    ros::Publisher tank_pub = nh.advertise<mavros_agrodrone::TankLevel>("tank_level", 10);
+    ros::Publisher tank_pub = nh.advertise<mavros_agrodrone::TankLevel>("/tank_sensor/tank_level", 10);
 
     mcp3008Spi a2d("/dev/spidev0.0", SPI_MODE_0, 1000000, 8);
     
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
     while(ros::ok()) {
         
         int tank_raw = get_sensor_value(a2d, a2dChannel);
-        int percentage = (tank_raw/1024)*100;
+        int percentage = (tank_raw*100)/1024;
 
         mavros_agrodrone::TankLevel msg;
         msg.raw = tank_raw;
