@@ -2,7 +2,9 @@
 <package>
   <name>tank_sensor</name>
   <version>0.0.0</version>
-  <description>The tank_sensor package</description>
+  <description>The tank_sensor package Based on the mcp3008,
+      
+      lib sourced from http://www.hertaville.com/interfacing-an-spi-adc-mcp3008-chip-to-the-raspberry-pi-using-c.html</description>
 
   <maintainer email="annesteenbeek@gmail.com">Anne Steenbeek</maintainer>
 
