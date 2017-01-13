@@ -25,7 +25,7 @@ public:
     void initialize(UAS &uas_) {
         uas = &uas_;
 
-        tank_level_sub = tl_nh.subscribe("tank_level", 10, &TankLevelPlugin::tank_level_cb, this);
+        tank_level_sub = tl_nh.subscribe("/mavros/tank_level", 10, &TankLevelPlugin::tank_level_cb, this);
     }
 
     const message_map get_rx_handlers() {

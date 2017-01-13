@@ -31,7 +31,7 @@ generate_messages(
  )
 
 catkin_package(
-#  LIBRARIES mavros_agrodrone
+  LIBRARIES mavros_agrodrone
   CATKIN_DEPENDS mavros std_msgs message_runtime
   DEPENDS Boost
 )
@@ -43,7 +43,7 @@ include_directories(
 )
 
 add_library(mavros_agrodrone
-    #  src/plugins/tank_level.cpp
+  src/plugins/tank_level.cpp
   src/plugins/agro_mode.cpp
 )
 
