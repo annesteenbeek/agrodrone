@@ -9,7 +9,7 @@ pwmBit::pwmBit() {
 
 // Calculate how many of the 256 ticks in each period should be high
 void pwmBit::setPWM(int pwm_val) {
-    pwm_ticks_high = std::min(256, std::max(0, pwm_val));
+    pwm_ticks_high = std::min(255, std::max(0, pwm_val));
 }
 
 int pwmBit::getState(int tick_nr) {

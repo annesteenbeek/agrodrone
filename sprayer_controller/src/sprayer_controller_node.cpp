@@ -1,17 +1,20 @@
-
-// Compile : gcc -o <create excute file name> <source file name> -lwiringPi -lwiringPiDev -lpthread
+/*
+* @brief node to contorol sprayer motor speeds
+* @file sprayer_controller_node.cpp
+* @author Anne Steenbeek <annesteenbeek@gmail.com>
+*/
 
 #include "sprayer_controller/pwmBit.h"
 #include "sprayer_controller/ShiftReg.h"
+#include "sprayer_controller/MotorSpeeds.h"
 #include "ros/ros.h"
-#include "ros/console.h"
 
 #define clockPin 0 
 #define latchPin 2
 #define dataPin 3 
 
 #define DEFAULT_FREQ 500
-#define TICKS 256
+#define TICKS 255
 
 
 ShiftReg shiftReg(clockPin, dataPin, latchPin);
@@ -29,6 +32,13 @@ void sprayerSendPWM(const ros::TimerEvent&) {
     shiftReg.sendData(data);
 }
 
+// TODO add ability to send less then 8 bytes, maybe only send 1 message at a time
+void pwmCallback(const sprayer_controller::MotorSpeeds::ConstPtr &msg) {
+	for(int i=0; i<8; ++i){
+		pwmArray[i].setPWM(msg->speeds[i]);
+	}
+	return; 
+}
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "sprayer_controller");
@@ -37,12 +47,9 @@ int main(int argc, char **argv) {
     int freq;
     nh.param("/pwm_freq", freq, DEFAULT_FREQ);
 
-    pwmArray[5].setPWM(100); // to test pwm
-    pwmArray[7].setPWM(200);
-    pwmArray[6].setPWM(1);
     freq *= TICKS; // multiply the pwm frequency with the ticks per phase
     ros::Timer pwm_timer = nh.createTimer(ros::Duration(1/((float) freq)), sprayerSendPWM);
-    ROS_DEBUG("pwm duration: %f", 1/((float) freq) );
+    ros::Subscriber sub = nh.subscribe("motor_speed", 3, pwmCallback);
 
     ros::spin();
     return 0 ;

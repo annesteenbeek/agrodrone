@@ -3,9 +3,21 @@ project(sprayer_controller)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
+  message_generation
   roscpp
   rosconsole
   rostime
+  std_msgs
+)
+
+add_message_files(
+  DIRECTORY msg
+  FILES
+  MotorSpeeds.msg
+)
+
+generate_messages(
+  DEPENDENCIES
   std_msgs
 )
 
@@ -50,4 +62,5 @@ target_link_libraries(
 add_dependencies(
     sprayer_controller
     wiringPi
+    sprayer_controller_generate_messages_cpp
     )
