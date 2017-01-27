@@ -1,3 +1,4 @@
+#include "sprayer_controller/ShiftReg.h"
 
 ShiftReg::ShiftReg(int clockPin, int dataPin, int latchPin) {
     myClockPin = clockPin;
@@ -52,5 +53,5 @@ void ShiftReg::sendData(unsigned char dataOut) {
 }
 
 ShiftReg::~ShiftReg(){
-    sendToShift(0); // set all pins low, should be hard reset
+    sendData(0); // set all pins low, should be hard reset
 }

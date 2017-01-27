@@ -9,8 +9,9 @@ class pwmBit {
 public:
     pwmBit();
     void setPWM(int pwm_val);
+    int getPWM(){return pwm_ticks_high;};
     int getState(int tick_nr);
 
 private:
-    int my_pwm;
+    int pwm_ticks_high;
 };

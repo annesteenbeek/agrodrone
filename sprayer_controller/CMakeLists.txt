@@ -6,7 +6,6 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rosconsole
   rostime
-  mavros_agrodrone
   std_msgs
 )
 
@@ -14,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES sprayer_controller
-  CATKIN_DEPENDS mavros_agrodrone roscpp std_msgs
+  CATKIN_DEPENDS roscpp std_msgs
 )
 
 # to define which directories contain header files
@@ -25,7 +24,8 @@ include_directories(
 
 # include a library 
 add_library(sprayer_controller
-    src/lib/mcp3008Spi.cpp 
+    src/lib/pwmBit.cpp
+    src/lib/ShiftReg.cpp
 )
 
 # define the actual executable
@@ -34,9 +34,20 @@ add_executable(
     src/sprayer_controller_node.cpp
 )
 
+FIND_LIBRARY(WIRINGPI_LIBRARY
+    wiringPi /root/wiringPi
+)
+
+
 # link the executable, the library and additional libraries 
 target_link_libraries(
     sprayer_controller_node
-    tank_sensor
+    sprayer_controller
     ${catkin_LIBRARIES}
+    ${WIRINGPI_LIBRARY}
 )
+
+add_dependencies(
+    sprayer_controller
+    wiringPi
+    )

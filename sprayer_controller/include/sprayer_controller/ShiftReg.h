@@ -1,4 +1,4 @@
-
+#pragma once
 #include <wiringPi.h>
 
 class ShiftReg {
@@ -11,4 +11,4 @@ class ShiftReg {
         int myDataPin;
         int myClockPin;
         int myLatchPin;
-}
+};
