@@ -1,1 +1,1 @@
-uint8[8] speeds
+uint32[8] speeds
