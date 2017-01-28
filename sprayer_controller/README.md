@@ -18,8 +18,10 @@ git pull origin
 ```
 
 ### GPIO layout
-*add image*
-       | Odroid c2 | 74hc595
+![alt tag](info/74hc595_layout.png)
+
+
+pin       | Odroid c2 | 74hc595
 -------|----------|---------
 Clock pin | GPIO 11 | Pin 11
 Latch pin | GPIO 13 | Pin 12
