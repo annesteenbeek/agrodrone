@@ -1,0 +1,6 @@
+<!-- vim: set ft=xml noet : -->
+<launch>
+
+    <node pkg="sprayer_controller" type="sprayer_controller_node" name="sprayer_controller" output="screen"/>
+
+</launch>

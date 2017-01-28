@@ -14,4 +14,9 @@ $ cd mavlink/pymavlink
 $ python setup.py install # maybe add sudo
 ```
 
+### Include in qgroundcontrol
+Make sure to use the recent version of the normal mavlink package, not the ROS version
+Include the agrodrone.xml into the v1.0 message set (no symbolic link)
+Get the mavlink submodule for pymavlink
+build it and send the output to the v2.0 mavlink set in the qgroundcontrol package, rebuild
 
