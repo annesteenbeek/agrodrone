@@ -1,4 +1,4 @@
-# sprayer_controll
+# sprayer_controller
 ## Overview
 This package contains the controllers for the pump and the motors
 This package uses the 74hc595 shift register to create 8 PWM signals for the motors
