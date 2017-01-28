@@ -18,7 +18,8 @@ These are blacklisted by default, to enable them at boot remove (or uncomment th
 
 ## Connecting
 
-![missing screenshot](info/MCP3008.png?raw=true "Basic plot of test data")
+![missing pressure image](info/MPX5010DP.png?raw=true "Pin layout of Pressure sensor.")
+![missing screenshot](info/MCP3008.png?raw=true "Pin layout of MCP3008 ADC chip.")
 
 The pins used for bitbanging are the same as on the older odroid for normal spi.
 
