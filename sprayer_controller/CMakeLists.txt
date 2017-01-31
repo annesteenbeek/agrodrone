@@ -37,7 +37,6 @@ include_directories(
 # include a library 
 add_library(sprayer_controller
     src/lib/pwmBit.cpp
-    src/lib/ShiftReg.cpp
 )
 
 # define the actual executable

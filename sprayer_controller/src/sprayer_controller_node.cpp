@@ -31,6 +31,8 @@ class SprayerController {
         got_params = got_params && ros::param::get("/sprayer_controller/dataPin", dataPin);
         got_params = got_params && ros::param::get("/sprayer_controller/latchPin", latchPin);
 
+        pwmArray[7].setMicroseconds(700);
+
         if (!got_params) {
             ROS_FATAL("Unable to retrieve GPIO pins from parameter server"); 
         } else {
@@ -44,9 +46,6 @@ class SprayerController {
         }
     }
 
-    /* SprayController::~SprayController(){ */
-    /* } */
-        
     void sprayerSendPWM(const ros::TimerEvent& event) {
         unsigned char data = 0;
         tick_nr = ++tick_nr % ticks; // 256 ticks per period
@@ -56,8 +55,8 @@ class SprayerController {
             data |= pwmArray[i].getState(tick_nr); // add new state to the right
         }
         digitalWrite(latchPin, 0);
-        shiftOut(dataPin, clockPin, 0, data);
-        digitalWrite(latchPin, 0);
+        shiftOut(dataPin, clockPin, 1, data);
+        digitalWrite(latchPin, 1);
     }
 
     void pwmCallback(const sprayer_controller::MotorSpeeds::ConstPtr &msg) {
