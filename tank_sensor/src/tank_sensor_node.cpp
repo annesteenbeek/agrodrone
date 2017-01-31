@@ -27,7 +27,7 @@
 
 using namespace std;
 
-int get_sensor_value(mcp3008Spi& mcp, int channel) {
+int getSensorValue(mcp3008Spi& mcp, int channel) {
         unsigned char data[3];
         data[0] = 1;  //  first byte transmitted -> start bit
         data[1] = 0b10000000 |( ((channel & 7) << 4)); // second byte transmitted -> (SGL/DIF = 1, D2=D1=D0=0)
@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
 
     while(ros::ok()) {
         
-        int tank_raw = get_sensor_value(a2d, a2dChannel);
+        int tank_raw = getSensorValue(a2d, a2dChannel);
         int percentage = (tank_raw*100)/1024;
 
         mavros_agrodrone::TankLevel msg;

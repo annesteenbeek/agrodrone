@@ -17,11 +17,17 @@ spidev
 These are blacklisted by default, to enable them at boot remove (or uncomment them in) /etc/modprobe.d/blacklist-spi.conf
 
 ## Connecting
+
+![missing pressure image](info/MPX5010DP.png?raw=true "Pin layout of Pressure sensor.")
+![missing screenshot](info/MCP3008.png?raw=true "Pin layout of MCP3008 ADC chip.")
+
 The pins used for bitbanging are the same as on the older odroid for normal spi.
-```
-sclk -> 23
-miso -> 21
-mosi -> 19
-Chip select -> 24
-```
+
+Pin | Odroid | chip
+-----|-------|------
+sclk |GPIO 23 | Pin 13
+miso |GPIO 21 | Pin 12
+mosi |GPIO 19 | Pin 11
+Chip select |GPIO 24 | Pin 10
+
 
