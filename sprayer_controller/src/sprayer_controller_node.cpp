@@ -31,22 +31,23 @@ class SprayerController {
         got_params = got_params && ros::param::get("/sprayer_controller/dataPin", dataPin);
         got_params = got_params && ros::param::get("/sprayer_controller/latchPin", latchPin);
 
-        pwmArray[7].setMicroseconds(700);
-
         if (!got_params) {
             ROS_FATAL("Unable to retrieve GPIO pins from parameter server"); 
         } else {
             pinSetup();
             freq *= ticks; // multiply the pwm frequency with the ticks per phase
             tick_nr = ticks;
-            ros::Timer pwm_timer = nh.createTimer(ros::Duration(1/((float) freq)), &SprayerController::sprayerSendPWM, this);
             ros::Subscriber sub = nh.subscribe("motor_speed", 3, &SprayerController::pwmCallback, this);
-
-            ros::spin();
+            ros::Rate rate(freq);
+            while(ros::ok()) {
+                sprayerSendPWM();
+                ros::spinOnce();
+                rate.sleep();
+            }
         }
     }
 
-    void sprayerSendPWM(const ros::TimerEvent& event) {
+    void sprayerSendPWM() {
         unsigned char data = 0;
         tick_nr = ++tick_nr % ticks; // 256 ticks per period
 
@@ -59,9 +60,12 @@ class SprayerController {
         digitalWrite(latchPin, 1);
     }
 
+    // TODO allow for individual motor settings
+    // TODO allow for PWM setting and duration setting
     void pwmCallback(const sprayer_controller::MotorSpeeds::ConstPtr &msg) {
         for(int i=0; i<8; ++i){
-            pwmArray[i].setPWM(msg->speeds[i]);
+            /* pwmArray[i].setPWM(msg->speeds[i]); */
+            pwmArray[i].setMicroseconds(msg->speeds[i]);
         }
     }
 

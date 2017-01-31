@@ -1,5 +1,5 @@
-pwm_freq: 500
-ticks: 255
+pwm_freq: 50 
+ticks: 255 
 
 clockPin: 4 
 latchPin: 5 
