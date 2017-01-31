@@ -1,6 +1,8 @@
 <!-- vim: set ft=xml noet : -->
 <launch>
 
-    <node pkg="sprayer_controller" type="sprayer_controller_node" name="sprayer_controller" output="screen"/>
+    <node pkg="sprayer_controller" type="sprayer_controller_node" name="sprayer_controller" output="screen">
+        <rosparam command="load" file="$(find sprayer_controller)/conf/sprayer_controller_conf.yaml" />
+    </node>
 
 </launch>

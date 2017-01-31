@@ -5,52 +5,79 @@
 */
 
 #include "sprayer_controller/pwmBit.h"
-#include "sprayer_controller/ShiftReg.h"
 #include "sprayer_controller/MotorSpeeds.h"
+#include <wiringPi.h>
+#include <wiringShift.h>
 #include "ros/ros.h"
+#include "ros/console.h"
 
-#define clockPin 0 
-#define latchPin 2
-#define dataPin 3 
+class SprayerController {
+    pwmBit pwmArray[8]; 
+    int clockPin;
+    int latchPin;
+    int dataPin;
 
-#define DEFAULT_FREQ 500
-#define TICKS 255
+    int freq;
+    int ticks;
+    int tick_nr;
 
+    public:
+    SprayerController (ros::NodeHandle nh) {
 
-ShiftReg shiftReg(clockPin, dataPin, latchPin);
-pwmBit pwmArray[8]; 
-int tick_nr = TICKS; 
-    
-void sprayerSendPWM(const ros::TimerEvent&) {
-    unsigned char data = 0;
-    tick_nr = ++tick_nr % TICKS; // 256 ticks per period
+        ros::param::param<int>("/sprayer_controller/pwm_freq", freq, DEFAULT_FREQ);
+        ros::param::param<int>("/sprayer_controller/ticks", ticks, DEFAULT_TICKS);
+        bool got_params = true;
+        got_params = got_params && ros::param::get("/sprayer_controller/clockPin", clockPin);
+        got_params = got_params && ros::param::get("/sprayer_controller/dataPin", dataPin);
+        got_params = got_params && ros::param::get("/sprayer_controller/latchPin", latchPin);
 
-    for(int i=8; i>=0; --i) { // walkt rough array reversed
-        data <<= 1; // shift the right most bit 1 place left 
-        data |= pwmArray[i].getState(tick_nr); // add new state to the right
+        if (!got_params) {
+            ROS_FATAL("Unable to retrieve GPIO pins from parameter server"); 
+        } else {
+            pinSetup();
+            freq *= ticks; // multiply the pwm frequency with the ticks per phase
+            tick_nr = ticks;
+            ros::Timer pwm_timer = nh.createTimer(ros::Duration(1/((float) freq)), &SprayerController::sprayerSendPWM, this);
+            ros::Subscriber sub = nh.subscribe("motor_speed", 3, &SprayerController::pwmCallback, this);
+
+            ros::spin();
+        }
     }
-    shiftReg.sendData(data);
-}
 
-// TODO add ability to send less then 8 bytes, maybe only send 1 message at a time
-void pwmCallback(const sprayer_controller::MotorSpeeds::ConstPtr &msg) {
-	for(int i=0; i<8; ++i){
-		pwmArray[i].setPWM(msg->speeds[i]);
-	}
-	return; 
-}
+    /* SprayController::~SprayController(){ */
+    /* } */
+        
+    void sprayerSendPWM(const ros::TimerEvent& event) {
+        unsigned char data = 0;
+        tick_nr = ++tick_nr % ticks; // 256 ticks per period
+
+        for(int i=8; i>=0; --i) { // walkt rough array reversed
+            data <<= 1; // shift the right most bit 1 place left 
+            data |= pwmArray[i].getState(tick_nr); // add new state to the right
+        }
+        digitalWrite(latchPin, 0);
+        shiftOut(dataPin, clockPin, 0, data);
+        digitalWrite(latchPin, 0);
+    }
+
+    void pwmCallback(const sprayer_controller::MotorSpeeds::ConstPtr &msg) {
+        for(int i=0; i<8; ++i){
+            pwmArray[i].setPWM(msg->speeds[i]);
+        }
+    }
+
+    void pinSetup() {
+        wiringPiSetup();
+
+        pinMode(clockPin, OUTPUT);
+        pinMode(dataPin, OUTPUT);
+        pinMode(latchPin, OUTPUT);
+    }
+};
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "sprayer_controller");
     ros::NodeHandle nh;
-
-    int freq;
-    nh.param("/pwm_freq", freq, DEFAULT_FREQ);
-
-    freq *= TICKS; // multiply the pwm frequency with the ticks per phase
-    ros::Timer pwm_timer = nh.createTimer(ros::Duration(1/((float) freq)), sprayerSendPWM);
-    ros::Subscriber sub = nh.subscribe("motor_speed", 3, pwmCallback);
-
-    ros::spin();
+    SprayerController sc(nh);
     return 0 ;
 }

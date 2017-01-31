@@ -1,0 +1,6 @@
+pwm_freq: 500
+ticks: 255
+
+clockPin: 2
+latchPin: 1
+dataPin: 3
