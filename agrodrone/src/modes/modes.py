@@ -40,13 +40,13 @@ class Modes(Machine):
         self.setup_publisher()
 
     def setup_publisher(self):
-        self.mode_pub = rospy.Publisher('companion_mode', CompanionMode, queue_size=3)
+        self.mode_pub = rospy.Publisher('/commander/companion_mode', CompanionMode, queue_size=3)
         mode_pub_rate = rospy.get_param("~mode_pub_rate", DEFAULT_MODE_PUBLISH_RATE)
         self.mode_pub_rate = rospy.Duration(1/mode_pub_rate)
         self.prev_publish_time = rospy.get_rostime()
 
     def setup_services(self):
-        self.set_mode_service = rospy.Service('set_companion_mode', SetCompanionMode, self.set_companion_mode)
+        self.set_mode_service = rospy.Service('/commander/set_companion_mode', SetCompanionMode, self.set_companion_mode)
 
     def publish_mode(self):
         now = rospy.get_rostime()

@@ -1,18 +1,25 @@
 <launch>
+    <!-- vim: set ft=xml noet : -->
+
     <arg name="gui" default="false"/>
     <arg name="headless" default="true"/>
     <arg name="ns" default="/"/>
-<!--TODO set namespace-->
-    <include file="$(find px4)/launch/mavros_posix_sitl.launch">
-        <arg name="fcu_url" value="udp://:14540@localhost:14557"/>
-        <arg name="gui" value="$(arg gui)"/>
-        <arg name="headless" value="$(arg headless)"/>
-        <arg name="ns" value="$(arg ns)"/>
-    </include>
+    <arg name="fcu_type" default="apm"/>
+   
+    <!-- <include file="$(find px4)/launch/mavros_posix_sitl.launch"> -->
+    <!--     <arg name="fcu_url" value="udp://:14540@localhost:14557"/> -->
+    <!--     <arg name="gui" value="$(arg gui)"/> -->
+    <!--     <arg name="headless" value="$(arg headless)"/> -->
+    <!--     <arg name="ns" value="$(arg ns)"/> -->
+    <!-- </include> -->
 
-    <node name="commander" pkg="agrodrone" type="commander.py" output="screen"/>
+	<include file="$(find mavros)/launch/apm.launch">
+		<arg name="fcu_url" value="udp://:14550@127.0.0.1:14557"/>
+	</include>
+
+	<node name="ardupilot" pkg="agrodrone" type="run_sim.sh" output="log"/>
     <group ns="$(arg ns)">
-        <!--<test test-name="position_control_test" pkg="agrodrone" type="posctlTest.py" time-limit="100.0"/>-->
-        <test test-name="spray_mission_test" pkg="agrodrone" type="sprayMissionTest.py" time-limit="120.0"/>
+        <!-- <test test-name="position_control_test" pkg="agrodrone" type="posctlTest.py" time-limit="100.0"/> -->
+		<test test-name="spray_mission_test" pkg="agrodrone" type="sprayMissionTest.py" time-limit="120.0"/>
     </group>
 </launch>

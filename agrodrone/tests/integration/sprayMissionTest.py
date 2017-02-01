@@ -16,8 +16,10 @@ from mavros_msgs.srv import WaypointPush, CommandTOL
 from mavros_msgs.msg import Waypoint, WaypointList
 from src.lib.vehicle import Vehicle
 from src.nodes.commander import CommanderNode
-from agrodrone.srv import SetCompanionMode, SetTankLevel
+from agrodrone.srv import SetCompanionMode
 from mavros.mission import QGroundControlWP
+from mavros_agrodrone.msg import TankLevel
+
 
 # TODO complete misison test
 # TODO include ardupilot auto test
@@ -32,6 +34,10 @@ class AgrodroneSprayMissionTest(unittest.TestCase):
         self.commander = CommanderNode(self.vehicle)
         rospy.Subscriber("mavros/local_position/pose", PoseStamped, self.position_callback)
         rospy.Subscriber("mavros/global_position/global", NavSatFix, self.global_position_callback)
+
+        self.tank_pub = rospy.Publisher("mavros/tank_level", TankLevel, queue_size=10)
+
+        self.mode_srv = rospy.ServiceProxy('/commander/set_companion_mode', SetCompanionMode)
         self.rate = rospy.Rate(10) # 10hz
         self.has_global_pos = False
         self.local_position = PoseStamped()
@@ -41,6 +47,13 @@ class AgrodroneSprayMissionTest(unittest.TestCase):
         self._srv_wp_push = rospy.ServiceProxy('mavros/mission/push', WaypointPush, persistent=True)
         # rospy.Subscriber("~companion_mode")
 
+    def set_tank(self, tank_level):
+        msg = TankLevel()
+        msg.percentage = tank_level
+        msg.raw = 0
+        self.tank_pub.publish(msg)
+
+
     def position_callback(self, data):
         self.local_position = data
 
@@ -48,7 +61,7 @@ class AgrodroneSprayMissionTest(unittest.TestCase):
         self.has_global_pos = True
 
     def upload_missions(self):
-        actualMissionFile = '/home/anne/catkin_ws/src/agrodrone/tests/integration/' + self.filename
+        actualMissionFile = '/home/anne/catkin_ws/src/agrodrone/agrodrone/tests/integration/' + self.filename
         wpl = []
         if self.vehicle.fcu_type == "PX4":
             with open(actualMissionFile) as mission_file:
@@ -71,22 +84,23 @@ class AgrodroneSprayMissionTest(unittest.TestCase):
             rospy.logerr("Unknown fcu type set")
 
         res = self._srv_wp_push(wpl)
-        self.assertTrue(res.success, "mission could not be transfered" )
+        return res.success
 
 
     def test_spray_mission(self):
         """Test offboard position control"""
 
-        # FIXME: hack to wait for simulation to be ready
+        # hack to wait for simulation to be ready
         while not self.has_global_pos:
             self.rate.sleep()
 
-        self.upload_missions()
-        mode_srv = rospy.ServiceProxy('set_companion_mode', SetCompanionMode)
+        upload_result = self.upload_missions()
+        self.assertTrue(upload_result, "mission could not be transfered" )
+        rospy.sleep(0.1)
+        self.set_tank(100) 
 
         while self.vehicle.mission_list is None:
             self.rate.sleep()
-
 
         self.vehicle.set_arm()
         rospy.sleep(1) # wait to receive arming
@@ -99,23 +113,20 @@ class AgrodroneSprayMissionTest(unittest.TestCase):
             takeoff(0, 0, lat, lng, 600)
             rospy.sleep(10)
 
-        mode_srv("Autospray")
+        self.mode_srv("Autospray")
         startTime = rospy.Time.now()
-        setTank = rospy.ServiceProxy("set_tank_level", SetTankLevel)
         tankFlag = False
         while not rospy.is_shutdown():
             self.commander.modes.run()
             if rospy.Time.now() - startTime >= rospy.Duration(30) and not tankFlag:
-                tankResult = setTank(5)
+                self.set_tank(5)
                 tankFlag = True
 
             if tankFlag and self.vehicle.landed_state:
                 # after landing, fill tank up, resume missoin
-                setTank(100)
+                self.set_tank(100)
 
             self.rate.sleep()
-
-        self.assertTrue(tankResult,"Tank not set to 5")
 
 if __name__ == '__main__':
     import rostest

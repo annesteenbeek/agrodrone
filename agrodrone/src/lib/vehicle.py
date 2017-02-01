@@ -5,7 +5,7 @@ import rospy
 from geometry_msgs.msg import Quaternion, PoseStamped, TwistStamped
 from tf.transformations import quaternion_from_euler
 import math
-from agrodrone.srv import SetTankLevel
+from mavros_agrodrone.msg import TankLevel
 from std_msgs.msg import Header
 from mavros_msgs.srv import CommandBool, SetMode
 from mavros_msgs.msg import Waypoint, WaypointList, CommandCode, State, ExtendedState
@@ -30,7 +30,7 @@ class Vehicle(object):
         self.firmware = None
         self.landed_state = None
         self.fcu_mode = None    # mode the FCU is currently in
-        self.tank_level = 100 # TODO implement tank and change to None
+        self.tank_level = None
         self.mission_list = None
         self.offb_modes = {'PX4': 'OFFBOARD', 'Ardupilot': 'GUIDED'}
         self.RTL_modes = {'PX4': 'AUTO.RTL', 'Ardupilot': 'RTL'}
@@ -40,7 +40,6 @@ class Vehicle(object):
         self.min_tank_level = rospy.get_param("~min_tank_level", DEFAULT_MIN_TANK_LEVEL)
 
         # TODO set stream rate
-        rospy.Service('set_tank_level', SetTankLevel, self.handle_set_tank_level)
         self.setup_subscribers()
         self.setup_publishers()
 
@@ -65,6 +64,10 @@ class Vehicle(object):
                         WaypointList,
                          self.mission_callback)
 
+        rospy.Subscriber("mavros/tank_level", 
+                       TankLevel, 
+                       self.tank_level_callback)
+
     def setup_publishers(self):
         self.location_setpoint_publisher = \
                 rospy.Publisher("mavros/setpoint_position/local",
@@ -76,14 +79,8 @@ class Vehicle(object):
                         TwistStamped,
                         queue_size=10)
 
-    def handle_set_tank_level(self, data):
-        if 100 >= data.tankLevel >= 0:
-            self.tank_level = data.tankLevel
-            result = True
-        else:
-            rospy.logerr("Tank level should be between 0 and 100")
-            result = False
-        return result
+    def tank_level_callback(self, msg):
+        self.tank_level = msg.percentage
 
     def extended_callback(self, data):
         if data.landed_state == 0:
