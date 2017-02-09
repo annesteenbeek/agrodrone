@@ -17,7 +17,7 @@
 		<arg name="fcu_url" value="udp://:14550@127.0.0.1:14557"/>
 	</include>
 
-	<node name="ardupilot" pkg="agrodrone" type="run_sim.sh" output="log"/>
+	<!-- <node name="ardupilot" pkg="agrodrone" type="run_sim.sh" output="log"/> -->
     <group ns="$(arg ns)">
         <!-- <test test-name="position_control_test" pkg="agrodrone" type="posctlTest.py" time-limit="100.0"/> -->
 		<test test-name="spray_mission_test" pkg="agrodrone" type="sprayMissionTest.py" time-limit="120.0"/>

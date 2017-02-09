@@ -46,7 +46,10 @@ class Modes(Machine):
         self.prev_publish_time = rospy.get_rostime()
 
     def setup_services(self):
-        self.set_mode_service = rospy.Service('/commander/set_companion_mode', SetCompanionMode, self.set_companion_mode)
+        self.set_mode_service = rospy.Service(
+            '/commander/set_companion_mode',
+            SetCompanionMode, self.set_companion_mode
+            )
 
     def publish_mode(self):
         now = rospy.get_rostime()
@@ -66,7 +69,7 @@ class Modes(Machine):
         mode_name = data.mode_to_set
         if self.cur_mode.name is not mode_name:
             if mode_name == "Inactive":
-               result = self.to_Inactive()
+                result = self.to_Inactive()
             elif mode_name == "RTD":
                 result = self.to_RTD()
             elif mode_name == "Autospray":
@@ -83,7 +86,4 @@ class Modes(Machine):
     def run(self):
         self.publish_mode()
         self.cur_mode.run()
-
-
-
 

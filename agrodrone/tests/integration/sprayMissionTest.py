@@ -42,10 +42,8 @@ class AgrodroneSprayMissionTest(unittest.TestCase):
         self.has_global_pos = False
         self.local_position = PoseStamped()
         self.armed = False
-        # self.filename = 'ardupilotSprayMission.mission'
         self.filename = 'arduMissionTest.txt'
         self._srv_wp_push = rospy.ServiceProxy('mavros/mission/push', WaypointPush, persistent=True)
-        # rospy.Subscriber("~companion_mode")
 
     def set_tank(self, tank_level):
         msg = TankLevel()
@@ -95,39 +93,46 @@ class AgrodroneSprayMissionTest(unittest.TestCase):
             self.rate.sleep()
 
         upload_result = self.upload_missions()
-        self.assertTrue(upload_result, "mission could not be transfered" )
-        rospy.sleep(0.1)
-        self.set_tank(100) 
+        self.assertTrue(upload_result, "mission could not be transfered")
+        rospy.sleep(1)
 
         while self.vehicle.mission_list is None:
             self.rate.sleep()
 
+        self.set_tank(100)
         self.vehicle.set_arm()
         rospy.sleep(1) # wait to receive arming
-        if self.vehicle.fcu_type == "Ardupilot":
-            self.vehicle.set_mode("GUIDED")
-            rospy.sleep(0.5)
-            takeoff = rospy.ServiceProxy('/mavros/cmd/takeoff', CommandTOL)
-            lat = self.vehicle.global_position.latitude
-            lng = self.vehicle.global_position.longitude
-            takeoff(0, 0, lat, lng, 600)
-            rospy.sleep(10)
 
+        #  if self.vehicle.fcu_type == "Ardupilot":
+            #  self.vehicle.set_mode("GUIDED")
+            #  rospy.sleep(0.5)
+            #  takeoff = rospy.ServiceProxy('/mavros/cmd/takeoff', CommandTOL)
+            #  lat = self.vehicle.global_position.latitude
+            #  lng = self.vehicle.global_position.longitude
+            #  takeoff(0, 0, lat, lng, 600)
+            #  rospy.sleep(10)
         self.mode_srv("Autospray")
-        startTime = rospy.Time.now()
-        tankFlag = False
+	rospy.sleep(1)
+	self.vehicle.command_mission_start()
+        start_time = rospy.Time.now()
+        tank_flag = False
+        wait_time = rospy.Duration(25)
         while not rospy.is_shutdown():
             self.commander.modes.run()
-            if rospy.Time.now() - startTime >= rospy.Duration(30) and not tankFlag:
+            if rospy.Time.now() - start_time >= wait_time and not tank_flag:
                 self.set_tank(5)
-                tankFlag = True
+                tank_flag = True
 
-            if tankFlag and self.vehicle.landed_state:
-                # after landing, fill tank up, resume missoin
+            if tank_flag and \
+                not self.vehicle.is_armed and \
+                self.vehicle.tank_level != 100:
+                # after landing, fill tank up, resume mission
                 self.set_tank(100)
+                self.vehicle.set_arm()
 
             self.rate.sleep()
 
 if __name__ == '__main__':
     import rostest
-    rostest.rosrun(PKG, 'agrodrone_spray_mission_test', AgrodroneSprayMissionTest)
+    rostest.rosrun(PKG, 'agrodrone_spray_mission_test',
+                    AgrodroneSprayMissionTest)

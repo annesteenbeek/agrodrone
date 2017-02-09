@@ -14,8 +14,11 @@ class TrackSpray(FlightState):
         This function is called when the mode enters this state
         """
         # TODO check if tank is connected and do pre spray checks...
+        # TODO implement mission sanity check; correct takeoff, altitude etc..
+        # TODO give takeoff control back to user
         self.vehicle.set_mode_mission()
         self.final_waypoint_flag = False
+        self.vehicle.command_mission_start()
         super(TrackSpray, self).enter(event_data)
 
 

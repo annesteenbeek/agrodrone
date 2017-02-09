@@ -3,12 +3,12 @@
 from src.lib.mode import Mode
 from src.modes.states import TrackSpray,\
     InterruptSpray,\
-    ResumeSpray,\
+    Docked,\
     EndSpray
 
 class Autospray(Mode):
     """
-    This is the Return To Dock mode, where the vehicle returns to the docking station
+    In this mode the copter follows a given mission, is ableto return to the dock, recharge and resume the mission from where it was interrupted.
     """
 
     def __init__(self, vehicle):
@@ -16,13 +16,13 @@ class Autospray(Mode):
 
         states = [TrackSpray,
                   InterruptSpray,
-                  ResumeSpray,
+                  Docked,
                   EndSpray
                   ]  # first state is automatically the initial state
 
         transitions = [['TrackSpray', 'InterruptSpray', 'track_to_interrupt'],
-                       ['InterruptSpray', 'ResumeSpray', 'interrupt_to_resume'],
-                       ['ResumeSpray', 'TrackSpray', 'resume_to_track'],
+                       ['InterruptSpray', 'Docked', 'interrupt_to_docked'],
+                       ['Docked', 'TrackSpray', 'docked_to_track'],
                        ['TrackSpray', 'EndSpray', 'track_to_end']]
 
         Mode.__init__(self, self.vehicle, states, transitions)
@@ -30,7 +30,8 @@ class Autospray(Mode):
 
     def track_to_interrupt(self):
         """
-        Checks if the spraying should be interrupted due to low battery or empty tank
+        Checks if the spraying should be interrupted due to low battery
+        or empty tank
         :return: True/False
         """
         # TODO check if battery is empty or tank is empty
@@ -40,7 +41,7 @@ class Autospray(Mode):
                 result = True
         return result
 
-    def interrupt_to_resume(self):
+    def interrupt_to_docked(self):
         """
         Waits for a docking complete signal to resume the spraying
         :return: True/False
@@ -48,7 +49,7 @@ class Autospray(Mode):
         # Checks the interrupt state for complete
         return self.cur_state.is_state_complete()
 
-    def resume_to_track(self):
+    def docked_to_track(self):
         """
         Checks for ready signal from resume state to make sure the new misison has been uploaded
         :return: True/False

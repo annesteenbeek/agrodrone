@@ -7,14 +7,15 @@ from tf.transformations import quaternion_from_euler
 import math
 from mavros_agrodrone.msg import TankLevel
 from std_msgs.msg import Header
-from mavros_msgs.srv import CommandBool, SetMode
+from mavros import command
+from mavros_msgs.srv import CommandBool, SetMode, CommandLong
 from mavros_msgs.msg import Waypoint, WaypointList, CommandCode, State, ExtendedState
 from sensor_msgs.msg import NavSatFix
 
 DEFAULT_FCU_TYPE = "Ardupilot"
 DEFAULT_CONTROL_LOOP_RATE = 100
 DEFAULT_MIN_TANK_LEVEL = 10
-
+DEFAULT_FULL_TANK_LEVEL = 90
 
 class Vehicle(object):
     """
@@ -35,9 +36,11 @@ class Vehicle(object):
         self.offb_modes = {'PX4': 'OFFBOARD', 'Ardupilot': 'GUIDED'}
         self.RTL_modes = {'PX4': 'AUTO.RTL', 'Ardupilot': 'RTL'}
         self.mission_modes = {'PX4': 'AUTO.MISSION', 'Ardupilot': 'AUTO'}
+        self.default_modes = {'PX4': 'MANUAL', 'Ardupilot': 'STABILIZE'}
         # TODO find better method to detect fcu type
         self.fcu_type = rospy.get_param("~fcu_type", DEFAULT_FCU_TYPE)
         self.min_tank_level = rospy.get_param("~min_tank_level", DEFAULT_MIN_TANK_LEVEL)
+        self.full_tank_level = rospy.get_param("~full_tank_level", DEFAULT_FULL_TANK_LEVEL)
 
         # TODO set stream rate
         self.setup_subscribers()
@@ -64,8 +67,8 @@ class Vehicle(object):
                         WaypointList,
                          self.mission_callback)
 
-        rospy.Subscriber("mavros/tank_level", 
-                       TankLevel, 
+        rospy.Subscriber("mavros/tank_level",
+                       TankLevel,
                        self.tank_level_callback)
 
     def setup_publishers(self):
@@ -167,13 +170,6 @@ class Vehicle(object):
         """
         pass
 
-    def set_mode(self, mode):
-        """
-        Ask the FCU to transition to the specified custom flight mode.
-        """
-        set_mode = rospy.ServiceProxy("mavros/set_mode", SetMode)
-        set_mode(custom_mode=mode)
-
     def set_armed_state(self, state):
         set_armed_state = rospy.ServiceProxy("mavros/cmd/arming", CommandBool)
         set_armed_state(value=state)
@@ -184,19 +180,33 @@ class Vehicle(object):
     def set_disarm(self):
         self.set_armed_state(False)
 
+    def set_mode(self, mode):
+        """
+        Ask the FCU to transition to the specified custom flight mode.
+        """
+        set_mode = rospy.ServiceProxy("mavros/set_mode", SetMode)
+        return set_mode(custom_mode=mode)
+
     def set_mode_autoland(self):
         """
         Transition to the RTL mode
         """
         RTL_string = self.RTL_modes[self.fcu_type]
-        self.set_mode(RTL_string)
+        return self.set_mode(RTL_string)
+
+    def set_mode_default(self):
+        """
+        Set the mode to the default mode, for pre arming etc..
+        """
+        mission_string = self.default_modes[self.fcu_type]
+        return self.set_mode(mission_string)
 
     def set_mode_mission(self):
         """
         Set the FCU in follow waypoint mission mode
         """
         mission_string = self.mission_modes[self.fcu_type]
-        self.set_mode(mission_string)
+        return self.set_mode(mission_string)
 
     def set_mode_offboard(self):
         """
@@ -212,5 +222,20 @@ class Vehicle(object):
             setpoint = [self.position.x, self.position.y, self.position.z, 0]
             self.set_local_setpoint(setpoint)
             rate.sleep()
-        self.set_mode(offb_string)
+        return self.set_mode(offb_string)
 
+    def command_mission_start(self):
+        send_command_long = rospy.ServiceProxy("mavros/cmd/command", CommandLong)
+        msg = CommandLong()
+        send_command_long(
+            broadcast=False,
+            command=CommandCode.CMD_MISSION_START,
+            confirmation=0,
+            param1=0,
+            param2=0,
+            param3=0,
+            param4=0,
+            param5=0,
+            param6=0,
+            param7=0
+        )
