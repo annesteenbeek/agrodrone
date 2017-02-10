@@ -50,7 +50,7 @@ class TrackSpray(FlightState):
                             # Let it crash, this should be handled if it ever happens
 
                         dist = self.vehicle.get_distance(lat, lon, alt, relative)
-                        result = True
+                        result = dist <= self.vehicle.acc_rad
                     break # final waypoint has been found, exit loop
         return result
 
