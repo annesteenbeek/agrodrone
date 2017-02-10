@@ -2,9 +2,11 @@
 
 import rospy
 from src.lib.state import FlightState
+from mavros import mission
 from mavros_msgs.msg import Waypoint, WaypointList, CommandCode
 from mavros_msgs.srv import WaypointPull, WaypointPush, WaypointClear, \
                             WaypointSetCurrent
+
 
 
 class InterruptSpray(FlightState):
@@ -31,9 +33,10 @@ class InterruptSpray(FlightState):
         """
         This function is called when the mode exits this state
         """
-        set_current_service = rospy.ServiceProxy("mavros/mission/set_current",
-                                                WaypointSetCurrent)
-        set_current_service(self.count)
+        ret = mission.set_current(self.new_waypoint_number)
+        if not ret.success:
+            rospy.logerr("Unable to set current waypoint")
+
         super(FlightState, self).exit(event_data)
 
 
@@ -45,6 +48,7 @@ class InterruptSpray(FlightState):
         copter is disarmed.
         """
         # TODO Improve correctness, check geo date of home etc..
+        # TODO move to library, also used to check if end mission is complete
         return not self.vehicle.is_armed
 
     def modify_waypoint_list(self):
@@ -63,12 +67,6 @@ class InterruptSpray(FlightState):
         backup_point.y_long = self.vehicle.global_position.longitude
         new_waypoint_list = self.vehicle.mission_list
 
-        # Add a takeoff DO command 
-        takeoff_point = backup_point
-        takeoff_point.command = CommandCode.NAV_TAKEOFF
-        takeoff_point.is_current = False
-        takeoff_point.z_alt = 15 # TODO allow manual setting control takeoff altitude
-
         count = 0
         for waypoint in new_waypoint_list:
             if waypoint.is_current:
@@ -76,8 +74,9 @@ class InterruptSpray(FlightState):
                 # set backup waypoint at same height as next waypoint
                 backup_point.z_alt = waypoint.z_alt
                 new_waypoint_list.insert(count, backup_point)
-                new_waypoint_list.insert(count + 1, takeoff_point)
+                self.new_waypoint_number = count
                 break
             count += 1
+
         return new_waypoint_list
 

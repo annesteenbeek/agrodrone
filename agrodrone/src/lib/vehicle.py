@@ -2,6 +2,7 @@
 
 import rospy
 
+from numpy import array, linalg
 from geometry_msgs.msg import Quaternion, PoseStamped, TwistStamped
 from tf.transformations import quaternion_from_euler
 import math
@@ -16,6 +17,7 @@ DEFAULT_FCU_TYPE = "Ardupilot"
 DEFAULT_CONTROL_LOOP_RATE = 100
 DEFAULT_MIN_TANK_LEVEL = 10
 DEFAULT_FULL_TANK_LEVEL = 90
+DEFAULT_MISSION_START_ALTITUDE = 10
 
 class Vehicle(object):
     """
@@ -41,6 +43,7 @@ class Vehicle(object):
         self.fcu_type = rospy.get_param("~fcu_type", DEFAULT_FCU_TYPE)
         self.min_tank_level = rospy.get_param("~min_tank_level", DEFAULT_MIN_TANK_LEVEL)
         self.full_tank_level = rospy.get_param("~full_tank_level", DEFAULT_FULL_TANK_LEVEL)
+        self.mission_start_altitude = rospy.get_param("~mission_start_altitude", DEFAULT_MISSION_START_ALTITUDE)
 
         # TODO set stream rate
         self.setup_subscribers()
@@ -95,6 +98,14 @@ class Vehicle(object):
 
     def global_callback(self, data):
         self.global_position = data
+
+    def has_gps(self):
+        """
+        This method is used to check if the vehicle currently has GPS
+        Connection, this can also be used to check if mavros is connected
+        correctly or if SITL is ready to be used.
+        """
+        return self.global_position is not None
 
     def set_local_setpoint(self, setpoint):
         """
@@ -226,7 +237,6 @@ class Vehicle(object):
 
     def command_mission_start(self):
         send_command_long = rospy.ServiceProxy("mavros/cmd/command", CommandLong)
-        msg = CommandLong()
         send_command_long(
             broadcast=False,
             command=CommandCode.CMD_MISSION_START,
@@ -239,3 +249,44 @@ class Vehicle(object):
             param6=0,
             param7=0
         )
+
+    def command_takeoff_cur(self, alt):
+        """
+        Takeoff at the current GPS position
+        """
+        if self.global_position is not None:
+            ret = command.takeoff(min_pitch=0,
+                yaw=0,
+                latitude=self.global_position.latitude,
+                longitude=self.global_position.longitude,
+                altitude=alt)
+            return ret.success
+        else:
+            rospy.logerr("Cannot do takeoff, no GPS data.")
+        return False
+
+    def do_takeoff(self, alt):
+        """
+        Do a takeoff at the current gps position
+        """
+        self.set_mode_offboard()
+        self.do_takeoff(alt)
+
+
+    def get_distance(self, lat, lon, alt=0, relative=True):
+        """
+        This method can be used to get the distance from the vehicle to a
+        certain postion, in both 2d and 3d.
+        """
+        v_gps = self.global_position
+        if alt == 0: # calculate 2d distance
+            point = array((lat, lon))
+            veh_point = array((v_gps.latitude, v_gps.longitude))
+        else:
+            if relative:
+                v_alt = self.position.z
+            else:
+                v_alt = v_gps.altitude
+            point = array((lat, lon, alt))
+            veh_point = array((v_gps.latitude, v_gps.longitude, v_alt))
+        return linalg.norm(point - veh_point)

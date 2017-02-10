@@ -7,6 +7,8 @@ from agrodrone.msg import CompanionMode
 
 DEFAULT_MODE_PUBLISH_RATE = 10
 
+# TODO add method where a mode is put back into pending if something
+#       happens not according to plan, ex. manual mode switch in autospray
 
 class Modes(Machine):
     """

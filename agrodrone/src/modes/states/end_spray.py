@@ -28,7 +28,7 @@ class EndSpray(FlightState):
         """
         This function returns True when the state has completed its task
         """
-        return True
+        return not self.vehicle.is_armed
 
 
     def run(self):

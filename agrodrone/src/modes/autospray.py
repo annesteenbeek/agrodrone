@@ -14,16 +14,19 @@ class Autospray(Mode):
     def __init__(self, vehicle):
         self.vehicle = vehicle
 
-        states = [TrackSpray,
+        # TODO currently enters at Docked, should add additional check to handle entering
+        #       Autospray mode while already in air
+        states = [Docked,
+                  TrackSpray,
                   InterruptSpray,
-                  Docked,
                   EndSpray
                   ]  # first state is automatically the initial state
 
         transitions = [['TrackSpray', 'InterruptSpray', 'track_to_interrupt'],
                        ['InterruptSpray', 'Docked', 'interrupt_to_docked'],
                        ['Docked', 'TrackSpray', 'docked_to_track'],
-                       ['TrackSpray', 'EndSpray', 'track_to_end']]
+                       ['TrackSpray', 'EndSpray', 'track_to_end']
+                       ['EndSpray', 'Docked', 'end_to_dock']]
 
         Mode.__init__(self, self.vehicle, states, transitions)
 
@@ -63,4 +66,11 @@ class Autospray(Mode):
         :return:
         """
         # Checks if Tracking state is complete
+        return self.cur_state.is_state_complete()
+
+    def end_to_dock(self):
+        """
+        Waits for a docking complete signal to resume the spraying
+        :return: True/False
+        """
         return self.cur_state.is_state_complete()

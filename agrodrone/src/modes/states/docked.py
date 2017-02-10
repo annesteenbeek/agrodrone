@@ -17,7 +17,13 @@ class Docked(FlightState):
 
     def is_state_complete(self):
         """
-        This method checks if the new mission has been uploaded to the FCU
+        This method checks if the copter is ready for launch
         """
+        if not self.vehicle.has_gps():
+            return False
+
         full = self.vehicle.tank_level >= self.vehicle.full_tank_level
-        return full and self.vehicle.is_armed 
+        # check if vehicle is at acceptable altitude
+        # TODO maybe include altitude takeoff check in seperate state
+        airborne = self.vehicle.position.z >= self.vehicle.mission_start_altitude
+        return full and self.vehicle.is_armed and airborne
