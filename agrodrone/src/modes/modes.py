@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 from transitions import Machine
 from src.modes import Inactive, RTD, Autospray
 import rospy
@@ -6,7 +7,6 @@ from agrodrone.srv import SetCompanionMode
 from agrodrone.msg import CompanionMode
 
 DEFAULT_MODE_PUBLISH_RATE = 10
-
 
 class Modes(Machine):
     """
@@ -33,20 +33,41 @@ class Modes(Machine):
                 Autospray(self.vehicle)
                 ]
 
-        self.initialState = modes[0].name
-        Machine.__init__(self, states=modes, initial=self.initialState, after_state_change='set_new_mode')
+        self.initial_state = modes[0].name
+        Machine.__init__(self,
+                        states=modes,
+                        initial=self.initial_state,
+                        after_state_change='set_new_mode')
         self.set_new_mode()
         self.setup_services()
         self.setup_publisher()
+        # TODO could be included as a transition, however, this might be more
+        #       resource friendly
+        rospy.Timer(rospy.Duration(0.5), self.check_manual_mode_change)
+
+    def check_manual_mode_change(self, event):
+        """
+        This method is used to regulary check if the fcu flight mode has been changed
+        by the user manually instead of by the software self.
+        If this is the case the state should be interrupted and set back to pending.
+        """
+        if self.vehicle.get_manual_mode_change(reset=True):
+            data = lambda: None
+            data.mode_to_set = "Inactive"
+            self.set_companion_mode(data)
+
 
     def setup_publisher(self):
-        self.mode_pub = rospy.Publisher('companion_mode', CompanionMode, queue_size=3)
+        self.mode_pub = rospy.Publisher('/commander/companion_mode', CompanionMode, queue_size=3)
         mode_pub_rate = rospy.get_param("~mode_pub_rate", DEFAULT_MODE_PUBLISH_RATE)
         self.mode_pub_rate = rospy.Duration(1/mode_pub_rate)
         self.prev_publish_time = rospy.get_rostime()
 
     def setup_services(self):
-        self.set_mode_service = rospy.Service('set_companion_mode', SetCompanionMode, self.set_companion_mode)
+        self.set_mode_service = rospy.Service(
+            '/commander/set_companion_mode',
+            SetCompanionMode, self.set_companion_mode
+            )
 
     def publish_mode(self):
         now = rospy.get_rostime()
@@ -60,13 +81,13 @@ class Modes(Machine):
     def set_companion_mode(self, data):
         """
         Service callback to set companion computer modes
-        :param input: String that represents a mode
+        :param data: String that represents a mode
         :return: True/False when mode switch has taken place
         """
         mode_name = data.mode_to_set
         if self.cur_mode.name is not mode_name:
             if mode_name == "Inactive":
-               result = self.to_Inactive()
+                result = self.to_Inactive()
             elif mode_name == "RTD":
                 result = self.to_RTD()
             elif mode_name == "Autospray":
@@ -83,7 +104,4 @@ class Modes(Machine):
     def run(self):
         self.publish_mode()
         self.cur_mode.run()
-
-
-
 

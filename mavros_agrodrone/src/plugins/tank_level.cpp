@@ -5,6 +5,7 @@
  */
 
 #include <mavros/mavros_plugin.h>
+#include <pluginlib/class_list_macros.h>
 
 #include <mavros_agrodrone/TankLevel.h>
 

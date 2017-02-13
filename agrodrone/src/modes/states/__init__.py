@@ -9,4 +9,5 @@ from .land_on_dock import LandOnDock
 from .track_spray import TrackSpray
 from .interrupt_spray import InterruptSpray
 from .resume_spray import ResumeSpray
+from .docked import Docked
 from .end_spray import EndSpray

@@ -25,8 +25,8 @@ public:
     void initialize(UAS &uas_) {
         PluginBase::initialize(uas_);
 
-        agro_mode_sub = am_nh.subscribe("agro_mode", 10, &AgroModePlugin::send_agro_mode_cb, this);
-        client = am_nh.serviceClient<agrodrone::SetCompanionMode>("/set_companion_mode");
+        agro_mode_sub = am_nh.subscribe("/commander/companion_mode", 10, &AgroModePlugin::send_agro_mode_cb, this);
+        client = am_nh.serviceClient<agrodrone::SetCompanionMode>("/commander/set_companion_mode");
     }
 
     Subscriptions get_subscriptions() {

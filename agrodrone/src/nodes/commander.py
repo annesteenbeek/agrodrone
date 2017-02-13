@@ -2,7 +2,7 @@
 # vim: set ts=4 sw=4 et:
 
 import rospy
-
+import mavros
 from src.modes.modes import Modes
 from src.lib.vehicle import Vehicle
 
@@ -22,11 +22,14 @@ class CommanderNode(object):
         self.control_loop_rate = rospy.Rate(control_loop_rate)
         # initialize the modes
         self.modes = Modes(self.vehicle)
+        # set mavros namespace
+        mavros.set_namespace()
 
     def run(self):
         """
         Spin the loop
         """
+        # TODO also check for FCU connection
         while not rospy.is_shutdown():
             self.modes.run()
             self.control_loop_rate.sleep()
