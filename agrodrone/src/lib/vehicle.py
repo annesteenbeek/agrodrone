@@ -36,6 +36,8 @@ class Vehicle(object):
         self.fcu_mode = None    # mode the FCU is currently in
         self.tank_level = None
         self.mission_list = None
+        self.last_set_mode = None
+        self.state_mutated = False
         self.offb_modes = {'PX4': 'OFFBOARD', 'Ardupilot': 'GUIDED'}
         self.RTL_modes = {'PX4': 'AUTO.RTL', 'Ardupilot': 'RTL'}
         self.mission_modes = {'PX4': 'AUTO.MISSION', 'Ardupilot': 'AUTO'}
@@ -158,8 +160,14 @@ class Vehicle(object):
         self.orientation = pose.orientation
 
     def state_callback(self, data):
+        # track for state changes, this is used to fix the state change delay issue
+        # for tracking a manual state change, state_mutated is reset after check
+        if self.fcu_mode != data.mode:
+            self.state_mutated = True
+
         self.fcu_mode = data.mode
-        if self.fcu_mode in self.offb_modes:
+
+        if self.fcu_mode in self.offb_modes.values():
             self.is_offboard = True
         else:
             self.is_offboard = False
@@ -170,6 +178,27 @@ class Vehicle(object):
             elif not data.armed:
                 self.run_on_disarm()
         self.is_armed = data.armed
+
+    def get_manual_mode_change(self, reset=False, ign_guided=True):
+        """
+        This method checks if the mode has been changed either by
+        the user or by using ROS.
+        :param reset: If this is True, the check resets again after a
+                        change has been detected.
+        :param ign_guided: Guided mode changes are ignored.
+        :return: Returns True/False if a manual mode change has been detected.
+        """
+        result = False
+        if self.last_set_mode is not None and self.state_mutated:
+            self.state_mutated = False # reset state mutation after check
+            if self.fcu_mode != self.last_set_mode:
+                if not (ign_guided and self.fcu_mode.upper() in self.offb_modes.values()):
+                    result = True
+                    rospy.loginfo("Manual mode change! mode set in ros: %s, last state received: %s" %
+                                (self.last_set_mode, self.fcu_mode))
+        if reset and result:
+            self.last_set_mode = None
+        return result
 
     def run_on_armed(self):
         """
@@ -198,7 +227,11 @@ class Vehicle(object):
         Ask the FCU to transition to the specified custom flight mode.
         """
         set_mode = rospy.ServiceProxy("mavros/set_mode", SetMode)
-        return set_mode(custom_mode=mode)
+        self.last_set_mode = mode
+        res = set_mode(custom_mode=mode)
+        if not res.success:
+            rospy.logerr("Failed mode change: to %s" % mode)
+        return res.success
 
     def set_mode_autoland(self):
         """

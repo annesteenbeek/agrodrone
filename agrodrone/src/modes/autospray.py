@@ -25,7 +25,7 @@ class Autospray(Mode):
         transitions = [['TrackSpray', 'InterruptSpray', 'track_to_interrupt'],
                        ['InterruptSpray', 'Docked', 'interrupt_to_docked'],
                        ['Docked', 'TrackSpray', 'docked_to_track'],
-                       ['TrackSpray', 'EndSpray', 'track_to_end']
+                       ['TrackSpray', 'EndSpray', 'track_to_end'],
                        ['EndSpray', 'Docked', 'end_to_dock']]
 
         Mode.__init__(self, self.vehicle, states, transitions)

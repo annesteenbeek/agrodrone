@@ -19,7 +19,7 @@ class Docked(FlightState):
         """
         This method checks if the copter is ready for launch
         """
-        if not self.vehicle.has_gps():
+        if not self.vehicle.has_gps() or self.vehicle.position is None:
             return False
 
         full = self.vehicle.tank_level >= self.vehicle.full_tank_level

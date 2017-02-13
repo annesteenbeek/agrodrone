@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import rospy
 from transitions import State
 
 class FlightState(State):
@@ -10,7 +11,7 @@ class FlightState(State):
     """
 
     def enter(self, event_data):
-        print("Entered state: " + self.name)
+        rospy.loginfo("Entered state: %s" % self.name)
         super(FlightState, self).enter(event_data)
 
     def __init__(self, vehicle):

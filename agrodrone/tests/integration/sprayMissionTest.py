@@ -84,9 +84,22 @@ class AgrodroneSprayMissionTest(unittest.TestCase):
         res = self._srv_wp_push(wpl)
         return res.success
 
+    def do_takeoff(self):
+         if self.vehicle.fcu_type == "Ardupilot":
+            self.vehicle.set_mode("GUIDED")
+            rospy.sleep(1)
+            takeoff = rospy.ServiceProxy('/mavros/cmd/takeoff', CommandTOL)
+            lat = self.vehicle.global_position.latitude
+            lng = self.vehicle.global_position.longitude
+            takeoff(0, 0, lat, lng, 20)
 
     def test_spray_mission(self):
         """Test offboard position control"""
+        #  mavros.util.wait_fcu_connection()
+        # have the commander loop in a seperate Thread
+        def run_commander(event):
+            self.commander.modes.run()
+        rospy.Timer(rospy.Duration(1), run_commander)
 
         # hack to wait for simulation to be ready
         while not self.has_global_pos:
@@ -99,26 +112,22 @@ class AgrodroneSprayMissionTest(unittest.TestCase):
         while self.vehicle.mission_list is None:
             self.rate.sleep()
 
-        self.set_tank(100)
-        self.vehicle.set_arm()
-        rospy.sleep(1) # wait to receive arming
-
-        #  if self.vehicle.fcu_type == "Ardupilot":
-            #  self.vehicle.set_mode("GUIDED")
-            #  rospy.sleep(0.5)
-            #  takeoff = rospy.ServiceProxy('/mavros/cmd/takeoff', CommandTOL)
-            #  lat = self.vehicle.global_position.latitude
-            #  lng = self.vehicle.global_position.longitude
-            #  takeoff(0, 0, lat, lng, 600)
-            #  rospy.sleep(10)
         self.mode_srv("Autospray")
-	rospy.sleep(1)
-	self.vehicle.command_mission_start()
+        rospy.sleep(1)
+        current_mode = self.commander.modes.cur_mode.name
+        self.assertEqual("Autospray", current_mode, 
+                "Vehicle not transitioned to Autospray, now in %s" % current_mode)
+
+        self.set_tank(100)
+        rospy.sleep(4)
+        self.vehicle.set_arm()
+        rospy.sleep(4)
+        # TODO include tests for unexpected mode change
+        self.do_takeoff()
         start_time = rospy.Time.now()
         tank_flag = False
         wait_time = rospy.Duration(25)
         while not rospy.is_shutdown():
-            self.commander.modes.run()
             if rospy.Time.now() - start_time >= wait_time and not tank_flag:
                 self.set_tank(5)
                 tank_flag = True
@@ -127,8 +136,11 @@ class AgrodroneSprayMissionTest(unittest.TestCase):
                 not self.vehicle.is_armed and \
                 self.vehicle.tank_level != 100:
                 # after landing, fill tank up, resume mission
+                rospy.sleep(1)
                 self.set_tank(100)
                 self.vehicle.set_arm()
+                rospy.sleep(2)
+                self.do_takeoff()
 
             self.rate.sleep()
 

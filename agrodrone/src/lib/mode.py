@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import rospy
 from transitions import Machine, State
 
 
@@ -26,8 +27,14 @@ class Mode(State, Machine):
             pass
 
     def enter(self, event_data):
-        print("Entered mode: " + self.name)
+        rospy.loginfo("Entered mode: %s" % self.name)
         super(Mode, self).enter(event_data)
+        # set initial state when mode is entered, this should "reset" the mode
+        #  self.set_state(self.initial)
+        # TODO FIX THIS FIRST
+        # FIXME THIS IS BAD. on reentering this mode, the initial state should be set, not only for docked!
+        if self.initial == "Docked":
+            self.to_Docked()
         # Make sure to also initialize the initial state
         self.cur_state.enter(event_data)
 
@@ -52,7 +59,7 @@ class Mode(State, Machine):
         for x in states:
              activeStates.append(x(vehicle))
 
-        self.initialState = activeStates[0].name
+        self.initial_state = activeStates[0].name
 
         # set a default trigger name for each transition
         if transitions is not None:
@@ -62,7 +69,7 @@ class Mode(State, Machine):
         Machine.__init__(self,
                          states=activeStates,
                          transitions=self.transitions,
-                         initial=self.initialState,
+                         initial=self.initial_state,
                          after_state_change='set_current_state')
         self.set_current_state()
         super(Mode, self).__init__(self.name)   # initialize the State class
