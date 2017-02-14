@@ -48,7 +48,8 @@ int main(int argc, char **argv) {
     int rate;
     nh.param("/tank_rate", rate, DEFAULT_RATE);
     ros::Rate tank_rate(rate);
-    ros::Publisher tank_pub = nh.advertise<mavros_agrodrone::TankLevel>("/tank_sensor/tank_level", 10);
+    // TODO fix namespace handling
+    ros::Publisher tank_pub = nh.advertise<mavros_agrodrone::TankLevel>("/mavros/tank_level", 10);
 
     mcp3008Spi a2d("/dev/spidev0.0", SPI_MODE_0, 1000000, 8);
     

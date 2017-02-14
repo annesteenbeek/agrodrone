@@ -1,0 +1,6 @@
+<launch>
+
+	<node pkg="agrodrone" type="commander.py" name="commander">
+		<rosparam file="$(find agrudrone)/launch/parameters.yaml" command="load" />
+	</node>
+</launch>
