@@ -9,7 +9,7 @@ import math
 from mavros_agrodrone.msg import TankLevel
 from std_msgs.msg import Header
 from mavros import command
-from mavros_msgs.srv import CommandBool, SetMode, CommandLong
+from mavros_msgs.srv import CommandBool, SetMode, CommandLong, StreamRate
 from mavros_msgs.msg import Waypoint, WaypointList, CommandCode, State, ExtendedState
 from sensor_msgs.msg import NavSatFix
 
@@ -18,6 +18,7 @@ DEFAULT_CONTROL_LOOP_RATE = 100
 DEFAULT_MIN_TANK_LEVEL = 10
 DEFAULT_FULL_TANK_LEVEL = 90
 DEFAULT_MISSION_START_ALTITUDE = 10
+DEFAULT_STREAM_RATE = 10
 DEFAULT_ACC_RAD = 1
 
 class Vehicle(object):
@@ -48,8 +49,14 @@ class Vehicle(object):
         self.full_tank_level = rospy.get_param("~full_tank_level", DEFAULT_FULL_TANK_LEVEL)
         self.mission_start_altitude = rospy.get_param("~mission_start_altitude", DEFAULT_MISSION_START_ALTITUDE)
         self.acc_rad = rospy.get_param("~acc_rad", DEFAULT_ACC_RAD)
+        stream_rate = rospy.get_param("~stream_rate", DEFAULT_STREAM_RATE)
 
-        # TODO set stream rate
+        rospy.wait_for_service("mavros/set_stream_rate")
+        set_stream_rate = rospy.ServiceProxy("mavros/set_stream_rate", StreamRate)
+        set_stream_rate(stream_id=0,
+                        message_rate=stream_rate,
+                        on_off=1) 
+
         self.setup_subscribers()
         self.setup_publishers()
 
