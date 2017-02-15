@@ -21,6 +21,8 @@
         </include>
     </group>
 
+    <node pkg="agrodrone" type="field_test.py" name="field_teset"/>
+
 	<node pkg="agrodrone" type="commander.py" name="commander">
 		<rosparam file="$(find agrodrone)/launch/parameters.yaml" command="load" />
 	</node>
