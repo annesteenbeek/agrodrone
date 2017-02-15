@@ -6,7 +6,7 @@ import rospy
 from agrodrone.srv import SetCompanionMode
 from agrodrone.msg import CompanionMode
 
-DEFAULT_MODE_PUBLISH_RATE = 10
+DEFAULT_MODE_PUBLISH_RATE = 1
 
 class Modes(Machine):
     """
