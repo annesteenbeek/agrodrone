@@ -13,6 +13,13 @@ There is a bug where including a message induces a compilation error when valida
 $ cd mavlink/pymavlink
 $ python setup.py install # maybe add sudo
 ```
+### Compiling pymavlink in windows
+To compile pymavlink in windows, clone their github repo, then create a seperate message_def folder with the agrodrone specific message set included.
+To compile, add the MDEV env variable
+```
+set MDEF=C:\Users\***\message_definitions\
+C:\Python27\Scripts\pip install . -v -U # while in the pymavlink repo folder
+```
 
 ### Include in qgroundcontrol
 Make sure to use the recent version of the normal mavlink package, not the ROS version
